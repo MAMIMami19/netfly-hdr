@@ -39,6 +39,8 @@ import com.nuvio.tv.ui.screens.CatalogSeeAllScreen
 import com.nuvio.tv.ui.screens.ExperienceModeSelectionScreen
 import com.nuvio.tv.ui.screens.LayoutSelectionScreen
 import com.nuvio.tv.ui.screens.detail.MetaDetailsScreen
+import com.nuvio.tv.ui.netflyhdr.NetflyHdrRoutes
+import com.nuvio.tv.ui.netflyhdr.detail.NetflyHdrDetailScreen
 import com.nuvio.tv.ui.screens.home.HomeScreen
 import com.nuvio.tv.ui.screens.addon.AddonManagerScreen
 import com.nuvio.tv.ui.screens.addon.CatalogOrderScreen
@@ -85,6 +87,33 @@ fun NuvioNavHost(
             PlaybackNavHost(navController, startDestination, hideBuiltInHeaders, discoverIsRoot)
         }
     }
+}
+
+/**
+ * Finds the detail entry for [contentId] on the back stack, matching either
+ * the base detail route or the Netfly HDR detail route. The player/stream
+ * return paths use this so playback started from the Netfly detail page
+ * returns to that page instead of opening a fresh base detail page.
+ */
+private fun NavHostController.findDetailEntryFor(
+    contentId: String,
+    contentType: String
+): NavBackStackEntry? {
+    return currentBackStack.value.lastOrNull { entry ->
+        val route = entry.destination.route
+        val isDetailRoute = route?.startsWith("detail/") == true || route == NetflyHdrRoutes.Detail
+        if (!isDetailRoute) return@lastOrNull false
+        val itemId = entry.arguments?.getString("itemId").orEmpty()
+        val itemType = entry.arguments?.getString("itemType").orEmpty()
+        itemId == contentId &&
+            (itemType.isBlank() || contentType.isBlank() || itemType.equals(contentType, ignoreCase = true))
+    }
+}
+
+/** Pops back to a detail entry found by [findDetailEntryFor], whatever its route. */
+private fun NavHostController.popBackToDetailEntry(entry: NavBackStackEntry): Boolean {
+    val route = entry.destination.route ?: return false
+    return popBackStack(route, inclusive = false)
 }
 
 // Root destinations carry the legacy sidebar inset themselves so the NavHost container
@@ -489,6 +518,86 @@ private fun PlaybackNavHost(
             }
         }
 
+        // Netfly HDR detail page (route contract: NetflyHdrRoutes.Detail).
+        // Reuses MetaDetailsViewModel via hiltViewModel() — the ViewModel
+        // reads itemId / itemType / addonBaseUrl from the SavedStateHandle,
+        // so this route carries the same arguments as the base detail route.
+        // Cast navigation goes through the parent NavController: CastDetail
+        // is registered in this graph as well as in DetailChildHost.
+        composable(
+            route = NetflyHdrRoutes.Detail,
+            arguments = listOf(
+                navArgument("itemId") { type = NavType.StringType },
+                navArgument("itemType") { type = NavType.StringType },
+                navArgument("addonBaseUrl") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            NetflyHdrDetailScreen(
+                onBackPress = {
+                    navController.popBackStack()
+                },
+                onNavigateToCastDetail = { personId, personName, preferCrew ->
+                    navController.navigate(
+                        Screen.CastDetail.createRoute(personId, personName, preferCrew)
+                    )
+                },
+                onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
+                    navController.navigate(
+                        NetflyHdrRoutes.detail(itemId, itemType, addonBaseUrl)
+                    )
+                },
+                onPlayClick = { videoId, contentType, contentId, title, poster, backdrop, logo, season, episode, episodeName, genres, year, runtime, contentLanguage ->
+                    navController.navigate(
+                        Screen.Stream.createRoute(
+                            videoId = videoId,
+                            contentType = contentType,
+                            title = title,
+                            poster = poster,
+                            backdrop = backdrop,
+                            logo = logo,
+                            season = season,
+                            episode = episode,
+                            episodeName = episodeName,
+                            genres = genres,
+                            year = year,
+                            contentId = contentId,
+                            contentName = title,
+                            runtime = runtime,
+                            returnToDetailOnBack = contentType.equals("series", ignoreCase = true),
+                            contentLanguage = contentLanguage
+                        )
+                    )
+                },
+                onPlayManuallyClick = { videoId, contentType, contentId, title, poster, backdrop, logo, season, episode, episodeName, genres, year, runtime, contentLanguage ->
+                    navController.navigate(
+                        Screen.Stream.createRoute(
+                            videoId = videoId,
+                            contentType = contentType,
+                            title = title,
+                            poster = poster,
+                            backdrop = backdrop,
+                            logo = logo,
+                            season = season,
+                            episode = episode,
+                            episodeName = episodeName,
+                            genres = genres,
+                            year = year,
+                            contentId = contentId,
+                            contentName = title,
+                            runtime = runtime,
+                            manualSelection = true,
+                            returnToDetailOnBack = contentType.equals("series", ignoreCase = true),
+                            contentLanguage = contentLanguage
+                        )
+                    )
+                }
+            )
+        }
+
         composable(
             route = Screen.Stream.route,
             arguments = listOf(
@@ -611,11 +720,11 @@ private fun PlaybackNavHost(
                     val season = streamArgs?.getString("season")?.toIntOrNull()
                     val episode = streamArgs?.getString("episode")?.toIntOrNull()
                     if (streamContentType.equals("series", ignoreCase = true) && streamContentId.isNotBlank()) {
-                        val detailEntry = runCatching { navController.getBackStackEntry(Screen.Detail.route) }.getOrNull()
+                        val detailEntry = navController.findDetailEntryFor(streamContentId, streamContentType)
                         if (detailEntry != null) {
                             detailEntry.savedStateHandle["returnFocusSeason"] = season
                             detailEntry.savedStateHandle["returnFocusEpisode"] = episode
-                            navController.popBackStack(Screen.Detail.route, inclusive = false)
+                            navController.popBackToDetailEntry(detailEntry)
                         } else {
                             navController.navigate(
                                 Screen.Detail.createRoute(
@@ -952,18 +1061,11 @@ private fun PlaybackNavHost(
                     val focusSeason = currentSeason ?: initialSeason
                     val focusEpisode = currentEpisode ?: initialEpisode
                     fun returnToDetail() {
-                        val detailEntry = navController.currentBackStack.value
-                            .lastOrNull {
-                                val itemId = it.arguments?.getString("itemId").orEmpty()
-                                val itemType = it.arguments?.getString("itemType").orEmpty()
-                                it.destination.route?.startsWith("detail/") == true &&
-                                    itemId == contentId &&
-                                    (itemType.isBlank() || contentType.isBlank() || itemType.equals(contentType, ignoreCase = true))
-                            }
+                        val detailEntry = navController.findDetailEntryFor(contentId, contentType)
                         if (detailEntry != null) {
                             detailEntry.savedStateHandle["returnFocusSeason"] = focusSeason
                             detailEntry.savedStateHandle["returnFocusEpisode"] = focusEpisode
-                            navController.popBackStack(Screen.Detail.route, inclusive = false)
+                            navController.popBackToDetailEntry(detailEntry)
                         } else {
                             navController.navigate(
                                 Screen.Detail.createRoute(
@@ -1084,13 +1186,16 @@ private fun PlaybackNavHost(
                     } else {
                         if (exitReason == PlayerExitReason.StillWatchingPrompt) {
                             val detailEntry = navController.currentBackStack.value
-                                .lastOrNull { it.destination.route?.startsWith("detail/") == true }
+                                .lastOrNull {
+                                    it.destination.route?.startsWith("detail/") == true ||
+                                        it.destination.route == NetflyHdrRoutes.Detail
+                                }
                             if (detailEntry != null) {
                                 detailEntry.savedStateHandle["returnFocusSeason"] = null
                                 detailEntry.savedStateHandle["returnFocusEpisode"] = null
                                 val token = (detailEntry.savedStateHandle.get<Int>("heroRestoreToken") ?: 0) + 1
                                 detailEntry.savedStateHandle["heroRestoreToken"] = token
-                                navController.popBackStack(Screen.Detail.route, inclusive = false)
+                                navController.popBackToDetailEntry(detailEntry)
                             } else {
                                 val contentId = args?.getString("contentId").orEmpty()
                                 val contentType = args?.getString("contentType").orEmpty()
@@ -1124,18 +1229,11 @@ private fun PlaybackNavHost(
                             val focusSeason = args?.getString("season")?.toIntOrNull()
                             val focusEpisode = args?.getString("episode")?.toIntOrNull()
                             if (contentId.isNotBlank()) {
-                                val detailEntry = navController.currentBackStack.value
-                                    .lastOrNull {
-                                        val itemId = it.arguments?.getString("itemId").orEmpty()
-                                        val itemType = it.arguments?.getString("itemType").orEmpty()
-                                        it.destination.route?.startsWith("detail/") == true &&
-                                            itemId == contentId &&
-                                            (itemType.isBlank() || contentType.isBlank() || itemType.equals(contentType, ignoreCase = true))
-                                    }
+                                val detailEntry = navController.findDetailEntryFor(contentId, contentType)
                                 if (detailEntry != null) {
                                     detailEntry.savedStateHandle["returnFocusSeason"] = focusSeason
                                     detailEntry.savedStateHandle["returnFocusEpisode"] = focusEpisode
-                                    navController.popBackStack(Screen.Detail.route, inclusive = false)
+                                    navController.popBackToDetailEntry(detailEntry)
                                 } else {
                                     navController.navigate(
                                         Screen.Detail.createRoute(
