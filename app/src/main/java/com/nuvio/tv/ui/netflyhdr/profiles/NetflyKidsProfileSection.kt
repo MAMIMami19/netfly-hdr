@@ -41,6 +41,7 @@ import androidx.tv.material3.Text
 import com.nuvio.tv.R
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.netflyhdr.NetflyRed
+import com.nuvio.tv.ui.theme.NuvioTheme
 
 /**
  * Kids settings for the ACTIVE profile (design §11), hosted in the Profiles
@@ -195,7 +196,7 @@ private fun NetflyTogglePill(checked: Boolean) {
     val trackColor = if (checked) {
         NetflyRed.copy(alpha = 0.45f)
     } else {
-        MaterialTheme.colorScheme.outline
+        NuvioTheme.colors.Border
     }
     Box(
         modifier = Modifier
