@@ -258,6 +258,8 @@ private fun NetflyHdrProfileRow(
     val colorScheme = MaterialTheme.colorScheme
     var isFocused by remember { mutableStateOf(false) }
     val rowShape = RoundedCornerShape(NetflyHdrDimensions.posterCornerRadius)
+    // Hoisted: stringResource is @Composable and cannot run inside semantics {}.
+    val switchProfileDescription = stringResource(R.string.netflyhdr_nav_switch_profile)
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -270,7 +272,7 @@ private fun NetflyHdrProfileRow(
                 if (state.isFocused) onFocused()
             }
             .semantics {
-                contentDescription = stringResource(R.string.netflyhdr_nav_switch_profile)
+                contentDescription = switchProfileDescription
                 role = Role.Button
             },
         colors = CardDefaults.colors(
