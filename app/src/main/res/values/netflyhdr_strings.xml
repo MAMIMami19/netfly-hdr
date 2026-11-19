@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Netfly HDR strings (profiles, ambient mode, player). Kept in a separate file
-     so feature branches never conflict on strings.xml. -->
 <resources>
-    <!-- Avatar gallery (Netfly design §11) -->
     <string name="netfly_avatar_gallery_title">Choose an avatar</string>
     <string name="netfly_avatar_gallery_subtitle">Avatar for %1$s</string>
     <string name="netfly_avatar_gallery_hint">Select an avatar and press OK to apply it</string>
@@ -12,8 +9,6 @@
     <string name="netfly_avatar_gallery_row_title">Avatar gallery</string>
     <string name="netfly_avatar_gallery_row_subtitle">Choose an avatar for the active profile</string>
     <string name="netfly_avatar_name">Avatar %1$d</string>
-
-    <!-- Kids profile (Netfly design §11) -->
     <string name="netfly_kids_title">Kids</string>
     <string name="netfly_kids_mode_title">Kids profile</string>
     <string name="netfly_kids_mode_subtitle">Limit this profile to age-appropriate titles</string>
@@ -22,8 +17,6 @@
     <string name="netfly_kids_max_age_dialog_title">Maximum age rating</string>
     <string name="netfly_kids_age_option">%1$d+</string>
     <string name="netfly_kids_age_label">Ages %1$d and under</string>
-
-    <!-- Aspect ratio picker (Netfly design §13) -->
     <string name="netfly_aspect_title">Aspect ratio</string>
     <string name="netfly_aspect_original">Original</string>
     <string name="netfly_aspect_original_desc">Show the video as it is, with black bars if needed</string>
@@ -31,4 +24,31 @@
     <string name="netfly_aspect_zoom_desc">Crop the picture to fill the screen</string>
     <string name="netfly_aspect_stretch">Stretch 4:3 to 16:9</string>
     <string name="netfly_aspect_stretch_desc">Stretch the picture to fill the screen</string>
+    <string name="netflyhdr_nav_calendar">Episode Calendar</string>
+    <string name="netflyhdr_nav_my_list">My List</string>
+    <string name="netflyhdr_nav_history">History</string>
+    <string name="netflyhdr_nav_store">Store</string>
+    <string name="netflyhdr_nav_switch_profile">Switch profile</string>
+    <string name="netflyhdr_detail_resume">Resume</string>
+    <string name="netflyhdr_detail_add_to_my_list">My List</string>
+    <string name="netflyhdr_detail_in_my_list">In My List</string>
+    <string name="netflyhdr_detail_watched">Watched</string>
+    <string name="netflyhdr_detail_mark_watched">Mark as watched</string>
+    <string name="netflyhdr_detail_seasons">Seasons</string>
+    <string name="netflyhdr_detail_episodes">Episodes</string>
+    <string name="netflyhdr_detail_season_number">Season %1$d</string>
+    <string name="netflyhdr_detail_episode_number">E%1$d</string>
+    <string name="netflyhdr_detail_minutes">%1$d min</string>
+    <string name="netflyhdr_detail_next_episode">Next: S%1$d E%2$d</string>
+    <string name="netflyhdr_detail_no_episodes">No episodes for this season yet.</string>
+    <string name="netflyhdr_detail_no_cast">No cast information available.</string>
+    <string name="netflyhdr_detail_about">About</string>
+    <string name="netflyhdr_detail_collection">Collection</string>
+    <string name="netflyhdr_detail_director">Director</string>
+    <string name="netflyhdr_detail_writer">Writer</string>
+    <string name="netflyhdr_detail_country">Country</string>
+    <string name="netflyhdr_detail_language">Language</string>
+    <string name="netflyhdr_detail_status">Status</string>
+    <string name="netflyhdr_detail_network">Network</string>
+    <string name="netflyhdr_trailer_playing_hint">Trailer playing · press any key to return</string>
 </resources>

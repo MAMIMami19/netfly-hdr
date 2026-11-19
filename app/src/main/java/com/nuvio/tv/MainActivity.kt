@@ -186,6 +186,8 @@ import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.navigation.LocalNavViewModelStoreOwner
 import com.nuvio.tv.ui.navigation.NuvioNavHost
 import com.nuvio.tv.ui.navigation.Screen
+import com.nuvio.tv.ui.netflyhdr.NetflyHdrRoutes
+import com.nuvio.tv.ui.netflyhdr.nav.NetflyHdrNavRailScaffold
 import com.nuvio.tv.ui.navigation.rememberNavSessionViewModelStoreOwner
 import com.nuvio.tv.ui.screens.party.PartyEffects
 import com.nuvio.tv.ui.membership.LocalMemberAccess
@@ -1104,69 +1106,20 @@ open class MainActivity : ComponentActivity() {
                             add(Screen.Search.route)
                             add(Screen.Library.route)
                             add(Screen.Settings.route)
-                            if (discoverLocation == DiscoverLocation.IN_SIDEBAR) {
+                            // The Netfly HDR rail is Discover's home unless the
+                            // user turned Discover off entirely.
+                            if (discoverLocation != DiscoverLocation.OFF) {
                                 add(Screen.Discover.route)
                             }
+                            // Netfly HDR destinations owned by the Store /
+                            // Calendar / History builder: harmless until their
+                            // routes land in the nav graph (the rail guards
+                            // the entries until then).
+                            add(NetflyHdrRoutes.Store)
+                            add(NetflyHdrRoutes.Calendar)
+                            add(NetflyHdrRoutes.History)
                         }
                     }
-
-                    val strNavHome = stringResource(R.string.nav_home)
-                    val strNavDiscover = stringResource(R.string.nav_discover)
-                    val strNavSearch = stringResource(R.string.nav_search)
-                    val strNavLibrary = stringResource(R.string.nav_library)
-                    val strNavSettings = stringResource(R.string.nav_settings)
-                    val drawerItems = remember(
-                        strNavHome,
-                        strNavDiscover,
-                        strNavSearch,
-                        strNavLibrary,
-                        strNavSettings,
-                        discoverLocation
-                    ) {
-                        buildList {
-                            add(
-                                DrawerItem(
-                                    route = Screen.Home.route,
-                                    label = strNavHome,
-                                    icon = Icons.Default.Home
-                                )
-                            )
-                            if (discoverLocation == DiscoverLocation.IN_SIDEBAR) {
-                                add(
-                                    DrawerItem(
-                                        route = Screen.Discover.route,
-                                        label = strNavDiscover,
-                                        icon = Icons.Default.Explore
-                                    )
-                                )
-                            }
-                            add(
-                                DrawerItem(
-                                    route = Screen.Search.route,
-                                    label = strNavSearch,
-                                    iconRes = R.raw.sidebar_search
-                                )
-                            )
-                            add(
-                                DrawerItem(
-                                    route = Screen.Library.route,
-                                    label = strNavLibrary,
-                                    iconRes = R.raw.sidebar_library
-                                )
-                            )
-                            add(
-                                DrawerItem(
-                                    route = Screen.Settings.route,
-                                    label = strNavSettings,
-                                    iconRes = R.raw.sidebar_settings
-                                )
-                            )
-                        }
-                    }
-                    val selectedDrawerRoute = drawerItems.firstOrNull { item ->
-                        currentRoute == item.route || currentRoute?.startsWith("${item.route}/") == true
-                    }?.route
-                    val selectedDrawerItem = drawerItems.firstOrNull { it.route == selectedDrawerRoute } ?: drawerItems.first()
 
                     val confirmExitEnabled by profileManager.confirmExitEnabled.collectAsState()
                     var backPressedOnce by remember { mutableStateOf(false) }
@@ -1217,47 +1170,34 @@ open class MainActivity : ComponentActivity() {
                         }
                         Box(modifier = Modifier.fillMaxSize()) {
                             CompositionLocalProvider(LocalNavViewModelStoreOwner provides navViewModelStoreOwner) {
-                                if (modernSidebarEnabled) {
-                                    ModernSidebarScaffold(
-                                        longPressBackHeld = longPressBackHeld,
-                                        navController = navController,
-                                        startDestination = startDestination,
-                                        currentRoute = currentRoute,
-                                        rootRoutes = rootRoutes,
-                                        drawerItems = drawerItems,
-                                        selectedDrawerRoute = selectedDrawerRoute,
-                                        selectedDrawerItem = selectedDrawerItem,
-                                        sidebarCollapsed = sidebarCollapsed,
-                                        modernSidebarBlurEnabled = modernSidebarBlurEnabled,
-                                        hideBuiltInHeaders = hideBuiltInHeadersForFloatingPill,
-                                        activeProfileName = activeProfile?.name ?: "",
-                                        activeProfileColorHex = activeProfile?.avatarColorHex ?: "#1E88E5",
-                                        activeProfileAvatarImageUrl = activeProfileAvatarImageUrl,
-                                        showProfileSelector = profiles.size > 1,
-                                        onSwitchProfile = handleSwitchProfile,
-                                        onNavigate = { optimisticRoute = it },
-                                        onExitApp = handleExitApp
-                                    )
-                                } else {
-                                    LegacySidebarScaffold(
-                                        longPressBackHeld = longPressBackHeld,
-                                        navController = navController,
-                                        startDestination = startDestination,
-                                        currentRoute = currentRoute,
-                                        rootRoutes = rootRoutes,
-                                        drawerItems = drawerItems,
-                                        selectedDrawerRoute = selectedDrawerRoute,
-                                        sidebarCollapsed = sidebarCollapsed,
-                                        hideBuiltInHeaders = false,
-                                        activeProfileName = activeProfile?.name ?: "",
-                                        activeProfileColorHex = activeProfile?.avatarColorHex ?: "#1E88E5",
-                                        activeProfileAvatarImageUrl = activeProfileAvatarImageUrl,
-                                        showProfileSelector = profiles.size > 1,
-                                        onSwitchProfile = handleSwitchProfile,
-                                        onNavigate = { optimisticRoute = it },
-                                        onExitApp = handleExitApp
-                                    )
-                                }
+                                // Netfly HDR primary navigation: the collapsible
+                                // NavRail replaces the base modern/legacy
+                                // sidebars (their scaffolds remain below as
+                                // dead code until the cutover is confirmed).
+                                NetflyHdrNavRailScaffold(
+                                    longPressBackHeld = longPressBackHeld,
+                                    navController = navController,
+                                    startDestination = startDestination,
+                                    currentRoute = currentRoute,
+                                    rootRoutes = rootRoutes,
+                                    discoverLocation = discoverLocation,
+                                    sidebarCollapsed = sidebarCollapsed,
+                                    hideBuiltInHeaders = false,
+                                    activeProfileName = activeProfile?.name ?: "",
+                                    activeProfileColorHex = activeProfile?.avatarColorHex ?: "#1E88E5",
+                                    activeProfileAvatarImageUrl = activeProfileAvatarImageUrl,
+                                    showProfileSelector = profiles.size > 1,
+                                    onSwitchProfile = handleSwitchProfile,
+                                    onNavigate = { optimisticRoute = it },
+                                    onDrawerRouteClick = { targetRoute ->
+                                        navigateToDrawerRoute(
+                                            navController = navController,
+                                            currentRoute = currentRoute,
+                                            targetRoute = targetRoute
+                                        )
+                                    },
+                                    onExitApp = handleExitApp
+                                )
                             }
 
                             val autoNextOverlay by externalPlaybackTracker.autoNextOverlay.collectAsState()
