@@ -8,6 +8,7 @@ package com.nuvio.tv.ui.screens.player
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.layout.boundsInWindow
 import android.graphics.RectF
+import com.nuvio.tv.ui.netflyhdr.player.NetflyAspectRatioPicker
 import com.nuvio.tv.ui.screens.detail.formatPlaybackTime
 import com.nuvio.tv.ui.theme.NuvioMotion
 import kotlinx.coroutines.delay
@@ -256,6 +257,8 @@ fun PlayerScreen(
     var reportCodeVisible by remember { mutableStateOf(false) }
     var exitDispatched by remember { mutableStateOf(false) }
     var externalHandoffInProgress by remember { mutableStateOf(false) }
+    // Netfly HDR (§13): aspect-ratio picker dialog visibility.
+    var showNetflyAspectPicker by remember { mutableStateOf(false) }
     val autoPlayEnabledForBack = playerBackTreatsSkipAsAutoPlay(
         streamAutoPlayMode = uiState.streamAutoPlayMode,
         preferBingeGroupForNextEpisode = uiState.streamAutoPlayPreferBingeGroupForNextEpisode
@@ -1658,10 +1661,8 @@ fun PlayerScreen(
                 onShowAudioDialog = { viewModel.onEvent(PlayerEvent.OnShowAudioOverlay) },
                 onShowSubtitleDialog = { viewModel.onEvent(PlayerEvent.OnShowSubtitleOverlay) },
                 onShowSpeedDialog = { viewModel.onEvent(PlayerEvent.OnShowSpeedDialog) },
-                onToggleAspectRatio = {
-                    Log.d("PlayerScreen", "onToggleAspectRatio called - dispatching event")
-                    viewModel.onEvent(PlayerEvent.OnToggleAspectRatio)
-                },
+                // Netfly HDR (§13): aspect ratio opens the 3-option picker.
+                onShowAspectRatioPicker = { showNetflyAspectPicker = true },
                 onSwitchPlayerEngine = { viewModel.onEvent(PlayerEvent.OnSwitchInternalPlayerEngine) },
                 onReportPlaybackIssue = { viewModel.onEvent(PlayerEvent.OnReportPlaybackIssue) },
                 onToggleMoreActions = {
@@ -1705,6 +1706,17 @@ fun PlayerScreen(
                 onHideControls = { viewModel.hideControls() },
                 onBack = { exitPlayer() },
                 skipButtonVisible = skipButtonActuallyVisible
+            )
+        }
+
+        // Netfly HDR (§13): aspect-ratio picker dialog.
+        if (showNetflyAspectPicker) {
+            NetflyAspectRatioPicker(
+                currentMode = uiState.aspectMode,
+                onOptionSelected = { option ->
+                    viewModel.onEvent(PlayerEvent.OnSetAspectRatio(option.aspectMode))
+                },
+                onDismiss = { showNetflyAspectPicker = false }
             )
         }
 
@@ -2784,7 +2796,7 @@ private fun PlayerControlsOverlay(
     onShowAudioDialog: () -> Unit,
     onShowSubtitleDialog: () -> Unit,
     onShowSpeedDialog: () -> Unit,
-    onToggleAspectRatio: () -> Unit,
+    onShowAspectRatioPicker: () -> Unit,
     onSwitchPlayerEngine: () -> Unit,
     onReportPlaybackIssue: () -> Unit,
     onToggleMoreActions: () -> Unit,
@@ -3048,6 +3060,17 @@ private fun PlayerControlsOverlay(
                         )
                     }
 
+                    // Netfly HDR (§13): aspect ratio is a main-row control.
+                    ControlButton(
+                        icon = Icons.Default.AspectRatio,
+                        iconPainter = customAspectPainter,
+                        contentDescription = stringResource(R.string.cd_aspect_ratio),
+                        onClick = onShowAspectRatioPicker,
+                        upFocusRequester = progressUpTarget,
+                        onDownKey = onHideControls,
+                        onFocused = onResetHideTimer
+                    )
+
                     if (uiState.chapters.isNotEmpty() && !isLivePlayback) {
                         ControlButton(
                             icon = Icons.AutoMirrored.Filled.Toc,
@@ -3113,17 +3136,6 @@ private fun PlayerControlsOverlay(
                                 contentDescription = stringResource(R.string.cd_playback_speed),
                                 onClick = {
                                     onShowSpeedDialog()
-                                },
-                                upFocusRequester = progressUpTarget,
-                                onDownKey = onHideControls,
-                                onFocused = onResetHideTimer
-                            )
-                            ControlButton(
-                                icon = Icons.Default.AspectRatio,
-                                iconPainter = customAspectPainter,
-                                contentDescription = stringResource(R.string.cd_aspect_ratio),
-                                onClick = {
-                                    onToggleAspectRatio()
                                 },
                                 upFocusRequester = progressUpTarget,
                                 onDownKey = onHideControls,

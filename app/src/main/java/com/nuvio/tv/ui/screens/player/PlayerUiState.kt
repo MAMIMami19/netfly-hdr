@@ -418,6 +418,8 @@ sealed class PlayerEvent {
     data class OnSetSubtitleShadowSize(val size: Int) : PlayerEvent()
     data object OnResetSubtitleDefaults : PlayerEvent()
     data object OnToggleAspectRatio : PlayerEvent()
+    // Netfly HDR: set a specific aspect-ratio option from the picker (§13).
+    data class OnSetAspectRatio(val mode: AspectMode) : PlayerEvent()
     data object OnSwitchInternalPlayerEngine : PlayerEvent()
     data object OnSwitchToMpvPlayer : PlayerEvent()
     data object OnShowStreamInfo : PlayerEvent()

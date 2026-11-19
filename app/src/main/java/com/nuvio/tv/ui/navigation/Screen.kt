@@ -161,6 +161,8 @@ sealed class Screen(val route: String) {
     data object LayoutSettings : Screen("layout_settings")
     data object Account : Screen("account")
     data object ManageProfiles : Screen("manage_profiles")
+    // Netfly HDR: avatar gallery (design §11).
+    data object NetflyAvatarGallery : Screen("netfly_avatar_gallery")
     data object AuthSignIn : Screen("auth_sign_in")
     data object AuthQrSignIn : Screen("auth_qr_sign_in")
     data object SyncCodeGenerate : Screen("sync_code_generate")
