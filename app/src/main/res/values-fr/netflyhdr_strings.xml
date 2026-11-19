@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Netfly HDR strings (French). Mirrors values/netflyhdr_strings.xml. -->
+<resources>
+    <!-- Brand -->
+    <string name="netfly_wordmark_description">Netfly HDR</string>
+
+    <!-- Theme manager entry (Appearance settings) -->
+    <string name="netfly_theme_settings_row_title">Thèmes rouges Netfly</string>
+    <string name="netfly_theme_settings_row_subtitle">10 préréglages rouges, couleur d’accent, mode clair et sombre</string>
+
+    <!-- Theme manager dialog -->
+    <string name="netfly_theme_manager_title">Thèmes Netfly</string>
+    <string name="netfly_theme_presets_label">10 PRÉRÉGLAGES ROUGES NETFLY</string>
+    <string name="netfly_theme_dark">Sombre</string>
+    <string name="netfly_theme_light">Clair</string>
+    <string name="netfly_theme_applied">APPLIQUÉ</string>
+    <string name="netfly_theme_preview">APERÇU</string>
+    <string name="netfly_theme_hint">Flèches pour parcourir · OK pour appliquer · Retour pour annuler</string>
+    <string name="netfly_theme_accent_title">Couleur d’accent</string>
+    <string name="netfly_theme_accent_subtitle">Ne change que le focus, la progression et les boutons</string>
+    <string name="netfly_theme_accent_custom">Hexa personnalisé…</string>
+    <string name="netfly_theme_accent_reset">Réinitialiser l’accent</string>
+    <string name="netfly_theme_hex_title">Couleur d’accent personnalisée</string>
+    <string name="netfly_theme_hex_hint">Gauche / Droite pour déplacer · Haut / Bas pour changer · OK pour appliquer</string>
+    <string name="netfly_theme_reduce_motion">Réduire les animations</string>
+    <string name="netfly_theme_reduce_motion_subtitle">Désactive l’agrandissement des cartes et les bandes-annonces automatiques</string>
+    <string name="netfly_theme_back_to_nuvio">Revenir aux thèmes Nuvio</string>
+
+    <!-- Theme presets -->
+    <string name="netfly_theme_original">Netfly Original</string>
+    <string name="netfly_theme_original_desc">L’interface rouge classique</string>
+    <string name="netfly_theme_cinema_black">Cinema Black</string>
+    <string name="netfly_theme_cinema_black_desc">Panneaux presque noirs aux touches rouges épurées</string>
+    <string name="netfly_theme_midnight_crimson">Midnight Crimson</string>
+    <string name="netfly_theme_midnight_crimson_desc">Surfaces minuit froides avec un halo rouge profond</string>
+    <string name="netfly_theme_velvet_red">Velvet Red</string>
+    <string name="netfly_theme_velvet_red_desc">Panneaux bordeaux chaleureux, ambiance cinéma</string>
+    <string name="netfly_theme_carbon_red">Carbon Red</string>
+    <string name="netfly_theme_carbon_red_desc">Surfaces graphite dégradées, boutons rouges affirmés</string>
+    <string name="netfly_theme_dark_cherry">Dark Cherry</string>
+    <string name="netfly_theme_dark_cherry_desc">Tons cerise sombre aux détails rouges discrets</string>
+    <string name="netfly_theme_studio_red">Studio Red</string>
+    <string name="netfly_theme_studio_red_desc">Panneaux studio bleu-noir aux éléments rouges</string>
+    <string name="netfly_theme_scarlet_glass">Scarlet Glass</string>
+    <string name="netfly_theme_scarlet_glass_desc">Surfaces sombres dégradées, accent écarlate plus vif</string>
+    <string name="netfly_theme_minimal_red">Minimal Red</string>
+    <string name="netfly_theme_minimal_red_desc">Panneaux monochromes simples, focus rouge épuré</string>
+    <string name="netfly_theme_deep_maroon">Deep Maroon</string>
+    <string name="netfly_theme_deep_maroon_desc">Surfaces marron riches pour un cinéma plus sombre</string>
+
+    <!-- Accent presets -->
+    <string name="netfly_accent_netfly_red">Rouge Netfly</string>
+    <string name="netfly_accent_blue">Bleu</string>
+    <string name="netfly_accent_teal">Sarcelle</string>
+    <string name="netfly_accent_green">Vert</string>
+    <string name="netfly_accent_orange">Orange</string>
+    <string name="netfly_accent_light_red">Rouge clair</string>
+    <string name="netfly_accent_pink">Rose</string>
+
+    <!-- Home layout manager entry (Layout settings) -->
+    <string name="netfly_home_settings_row_title">Mise en page Netfly et réglages d’accueil</string>
+    <string name="netfly_home_settings_row_subtitle">10 mises en page, style du hero, lignes et options d’affichage</string>
+
+    <!-- Home settings dialog -->
+    <string name="netfly_home_settings_title">Accueil Netfly</string>
+    <string name="netfly_home_layouts_label">MISES EN PAGE D’ACCUEIL</string>
+    <string name="netfly_home_hero_mode_title">Style du hero</string>
+    <string name="netfly_home_hero_mode_panel">Panneau</string>
+    <string name="netfly_home_hero_mode_panel_desc">Image de fond avec un panneau latéral plein</string>
+    <string name="netfly_home_hero_mode_fullscreen">Plein écran</string>
+    <string name="netfly_home_hero_mode_fullscreen_desc">L’image de fond remplit tout l’écran</string>
+    <string name="netfly_home_hero_mode_bare">Épuré</string>
+    <string name="netfly_home_hero_mode_bare_desc">Fond compact pour les mises en page denses</string>
+    <string name="netfly_home_titles_per_row">Titres par ligne</string>
+    <string name="netfly_home_titles_per_row_subtitle">Nombre de titres affichés dans chaque ligne d’accueil</string>
+    <string name="netfly_home_poster_names">Afficher les noms sous les affiches</string>
+    <string name="netfly_home_poster_names_subtitle">Texte du titre sous chaque carte d’affiche</string>
+    <string name="netfly_home_hide_unreleased">Masquer les non sortis</string>
+    <string name="netfly_home_hide_unreleased_subtitle">Masquer les titres pas encore sortis</string>
+    <string name="netfly_home_imdb_cover">Note IMDb sur la jaquette</string>
+    <string name="netfly_home_imdb_cover_subtitle">Afficher la note IMDb sur les cartes d’accueil</string>
+    <string name="netfly_home_cw_show">Continuer à regarder</string>
+    <string name="netfly_home_cw_show_subtitle">Afficher la ligne « Continuer à regarder » sur l’accueil</string>
+    <string name="netfly_home_cw_style">Style de « Continuer à regarder »</string>
+    <string name="netfly_home_cw_style_card">Carte</string>
+    <string name="netfly_home_cw_style_wide">Paysage</string>
+    <string name="netfly_home_cw_style_poster">Affiche</string>
+    <string name="netfly_home_discover_location">Emplacement de Découvrir</string>
+    <string name="netfly_home_discover_in_search">Dans Recherche</string>
+    <string name="netfly_home_discover_in_sidebar">Dans la barre latérale</string>
+    <string name="netfly_home_discover_off">Désactivé</string>
+    <string name="netfly_home_featured_catalogs">Catalogues du carrousel vedette</string>
+    <string name="netfly_home_featured_catalogs_subtitle">Catalogues qui alimentent le carrousel vedette</string>
+    <string name="netfly_home_featured_catalogs_empty">Aucun catalogue disponible pour le moment</string>
+
+    <!-- Home layouts -->
+    <string name="netfly_layout_cinematic">Cinematic</string>
+    <string name="netfly_layout_cinematic_desc">Grand visuel vedette avec une ligne d’affiches ciblée</string>
+    <string name="netfly_layout_classic">Classic</string>
+    <string name="netfly_layout_classic_desc">Carrousel vedette au-dessus des lignes de catalogue</string>
+    <string name="netfly_layout_grid">Catalogue Grid</string>
+    <string name="netfly_layout_grid_desc">Grille ordonnée sur plusieurs lignes, focus flottant</string>
+    <string name="netfly_layout_compact">Compact</string>
+    <string name="netfly_layout_compact_desc">Affiches plus petites, plus de lignes à l’écran</string>
+    <string name="netfly_layout_landscape">Landscape</string>
+    <string name="netfly_layout_landscape_desc">Cartes paysage larges au lieu des affiches</string>
+    <string name="netfly_layout_square">Square</string>
+    <string name="netfly_layout_square_desc">Grille épurée de tuiles carrées</string>
+    <string name="netfly_layout_mosaic">Mosaic</string>
+    <string name="netfly_layout_mosaic_desc">Grille plus dense avec un bandeau vedette rotatif</string>
+    <string name="netfly_layout_spotlight">Spotlight</string>
+    <string name="netfly_layout_spotlight_desc">Grand carrousel vedette avec cartes paysage</string>
+    <string name="netfly_layout_minimal">Minimal</string>
+    <string name="netfly_layout_minimal_desc">Simple et compact, sans carrousel vedette</string>
+    <string name="netfly_layout_immersive">Immersive</string>
+    <string name="netfly_layout_immersive_desc">Visuel plein écran, cartes larges, moins de lignes</string>
+
+    <!-- Home empty state -->
+    <string name="netfly_empty_qr_hint">Scannez avec votre téléphone pour ajouter des sources depuis la page de configuration web</string>
+    <string name="netfly_empty_qr_unavailable">La configuration par téléphone est indisponible pour le moment. Ajoutez une source depuis le gestionnaire d’extensions.</string>
+    <string name="netfly_empty_qr_description">QR code pour la configuration par téléphone</string>
+
+    <!-- Hero -->
+    <string name="netfly_hero_mute_trailer">Couper le son de la bande-annonce</string>
+    <string name="netfly_hero_unmute_trailer">Activer le son de la bande-annonce</string>
+    <string name="netfly_hero_trailer_playing">Bande-annonce en cours</string>
+</resources>

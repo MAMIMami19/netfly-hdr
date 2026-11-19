@@ -46,6 +46,11 @@ import com.nuvio.tv.domain.model.LibrarySourceMode
 import com.nuvio.tv.domain.model.MetaPreview
 import com.nuvio.tv.domain.model.isSeriesLikeType
 import com.nuvio.tv.ui.components.ErrorState
+import com.nuvio.tv.ui.netflyhdr.home.LocalNetflyHomePrefs
+import com.nuvio.tv.ui.netflyhdr.home.NetflyEmptyState
+import com.nuvio.tv.ui.netflyhdr.home.NetflyHomeSkeleton
+import com.nuvio.tv.ui.netflyhdr.home.trimCatalogRows
+import com.nuvio.tv.ui.netflyhdr.home.trimModernPresentation
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.LocalStartupLoadingState
 import com.nuvio.tv.ui.components.LocalStartupSplashEnabled
@@ -61,7 +66,6 @@ import com.nuvio.tv.core.tracking.supportsMembershipFor
 import com.nuvio.tv.data.local.StartupAuthNotice
 import com.nuvio.tv.ui.components.posteroptions.TrackingRemovalConfirmationDialog
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
 private data class HomePosterOptionsTarget(
     val item: MetaPreview,
@@ -219,17 +223,29 @@ fun HomeScreen(
         }
     }
 
+    // Netfly HDR: the Classic/Grid poster height now honors the stored card
+    // height (same 1.5× value by default) so square layouts (Square, Mosaic)
+    // render square cards instead of forced 2:3 posters.
     val posterCardStyle = remember(
         uiState.posterCardWidthDp,
+        uiState.posterCardHeightDp,
         uiState.posterCardCornerRadiusDp
     ) {
-        val computedHeightDp = (uiState.posterCardWidthDp * 1.5f).roundToInt()
         PosterCardStyle(
             width = uiState.posterCardWidthDp.dp,
-            height = computedHeightDp.dp,
+            height = uiState.posterCardHeightDp.dp,
             cornerRadius = uiState.posterCardCornerRadiusDp.dp,
             focusedBorderWidth = PosterCardDefaults.Style.focusedBorderWidth,
             focusedScale = PosterCardDefaults.Style.focusedScale
+        )
+    }
+
+    // Netfly HDR: titles-per-row display cap for the Classic/Grid routes
+    // (the Modern presentation is trimmed in ModernHomeRoute below).
+    val netflyHomePrefs = LocalNetflyHomePrefs.current
+    val trimmedCatalogUiState = remember(uiState, netflyHomePrefs.titlesPerRow) {
+        uiState.copy(
+            catalogRows = trimCatalogRows(uiState.catalogRows, netflyHomePrefs.titlesPerRow)
         )
     }
 
@@ -268,45 +284,35 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         when {
+            // Netfly HDR: skeleton loading states instead of a black screen
+            // while home content loads (design spec §4).
             !uiState.layoutPreferencesReady -> {
-                Unit
+                NetflyHomeSkeleton()
             }
 
             uiState.isLoading && !hasAnyContent -> {
-                Unit
+                NetflyHomeSkeleton()
             }
 
             uiState.error == noAddonsError && uiState.catalogRows.isEmpty() -> {
                 if (!homeStableGateReleased) {
-                    Unit
+                    NetflyHomeSkeleton()
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_no_addons),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = NuvioTheme.colors.TextSecondary
-                        )
-                    }
+                    NetflyEmptyState(
+                        title = stringResource(R.string.home_empty_no_sources_title),
+                        explainer = stringResource(R.string.home_no_addons)
+                    )
                 }
             }
 
             uiState.error == noCatalogAddonsError && uiState.catalogRows.isEmpty() && !hasCollectionContent && !hasHeroContent -> {
                 if (!homeStableGateReleased) {
-                    Unit
+                    NetflyHomeSkeleton()
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_no_catalog_addons),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = NuvioTheme.colors.TextSecondary
-                        )
-                    }
+                    NetflyEmptyState(
+                        title = stringResource(R.string.home_error_no_catalog_addons),
+                        explainer = stringResource(R.string.home_no_catalog_addons)
+                    )
                 }
             }
 
@@ -321,18 +327,12 @@ fun HomeScreen(
                 // Don't show "no catalogs" until the stable gate has released —
                 // addons may still be loading from remote after a cache clear.
                 if (!homeStableGateReleased) {
-                    Unit
+                    NetflyHomeSkeleton()
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.web_no_catalogs),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = NuvioTheme.colors.TextSecondary
-                        )
-                    }
+                    NetflyEmptyState(
+                        title = stringResource(R.string.home_empty_no_sources_title),
+                        explainer = stringResource(R.string.web_no_catalogs)
+                    )
                 }
             }
 
@@ -340,9 +340,9 @@ fun HomeScreen(
                 // On first launch, wait for stable content before revealing home.
                 // Once released, never go back to loading (homeStableGateReleased is rememberSaveable).
                 if (!homeStableGateReleased) {
-                    Unit
+                    NetflyHomeSkeleton()
                 } else if (!modernPresentationReady) {
-                    Unit
+                    NetflyHomeSkeleton()
                 } else {
                     // Flip showHomeContentWithAnimation on the next frame so
                     // AnimatedVisibility can run its enter transition.
@@ -376,7 +376,7 @@ fun HomeScreen(
                         when (uiState.homeLayout) {
                             HomeLayout.CLASSIC -> ClassicHomeRoute(
                                 viewModel = viewModel,
-                                uiState = uiState,
+                                uiState = trimmedCatalogUiState,
                                 posterCardStyle = posterCardStyle,
                                 onNavigateToDetail = onNavigateToDetailStable,
                                 onContinueWatchingClick = onContinueWatchingClickStable,
@@ -391,7 +391,7 @@ fun HomeScreen(
 
                             HomeLayout.GRID -> GridHomeRoute(
                                 viewModel = viewModel,
-                                uiState = uiState,
+                                uiState = trimmedCatalogUiState,
                                 posterCardStyle = posterCardStyle,
                                 onNavigateToDetail = onNavigateToDetailStable,
                                 onContinueWatchingClick = onContinueWatchingClickStable,
@@ -653,7 +653,12 @@ private fun ModernHomeRoute(
 ) {
     val focusState by viewModel.focusState.collectAsStateWithLifecycle()
     val scrollToTopTrigger by viewModel.scrollToTopTrigger.collectAsStateWithLifecycle()
-    val modernPresentation by viewModel.modernHomePresentation.collectAsStateWithLifecycle()
+    val modernPresentationRaw by viewModel.modernHomePresentation.collectAsStateWithLifecycle()
+    // Netfly HDR: titles-per-row display cap for the Modern presentation.
+    val netflyTitlesPerRow = LocalNetflyHomePrefs.current.titlesPerRow
+    val modernPresentation = remember(modernPresentationRaw, netflyTitlesPerRow) {
+        trimModernPresentation(modernPresentationRaw, netflyTitlesPerRow)
+    }
     // Passed down as State, not values: enrichment changes on most focus moves, and reading it
     // here recomposed all of the home content for each one.
     val enrichingItemId = viewModel.enrichingItemId.collectAsStateWithLifecycle()
