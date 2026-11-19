@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Netfly HDR strings (profiles, ambient mode, player). Kept in a separate file
+     so feature branches never conflict on strings.xml. -->
+<resources>
+    <!-- Avatar gallery (Netfly design §11) -->
+    <string name="netfly_avatar_gallery_title">Choose an avatar</string>
+    <string name="netfly_avatar_gallery_subtitle">Avatar for %1$s</string>
+    <string name="netfly_avatar_gallery_hint">Select an avatar and press OK to apply it</string>
+    <string name="netfly_avatar_gallery_page">Page %1$d of %2$d</string>
+    <string name="netfly_avatar_gallery_previous_page">Previous page</string>
+    <string name="netfly_avatar_gallery_next_page">Next page</string>
+    <string name="netfly_avatar_gallery_row_title">Avatar gallery</string>
+    <string name="netfly_avatar_gallery_row_subtitle">Choose an avatar for the active profile</string>
+    <string name="netfly_avatar_name">Avatar %1$d</string>
+
+    <!-- Kids profile (Netfly design §11) -->
+    <string name="netfly_kids_title">Kids</string>
+    <string name="netfly_kids_mode_title">Kids profile</string>
+    <string name="netfly_kids_mode_subtitle">Limit this profile to age-appropriate titles</string>
+    <string name="netfly_kids_max_age_title">Maximum age rating</string>
+    <string name="netfly_kids_max_age_subtitle">Titles rated above this age are hidden</string>
+    <string name="netfly_kids_max_age_dialog_title">Maximum age rating</string>
+    <string name="netfly_kids_age_option">%1$d+</string>
+    <string name="netfly_kids_age_label">Ages %1$d and under</string>
+
+    <!-- Aspect ratio picker (Netfly design §13) -->
+    <string name="netfly_aspect_title">Aspect ratio</string>
+    <string name="netfly_aspect_original">Original</string>
+    <string name="netfly_aspect_original_desc">Show the video as it is, with black bars if needed</string>
+    <string name="netfly_aspect_zoom">Zoom 4:3 to 16:9</string>
+    <string name="netfly_aspect_zoom_desc">Crop the picture to fill the screen</string>
+    <string name="netfly_aspect_stretch">Stretch 4:3 to 16:9</string>
+    <string name="netfly_aspect_stretch_desc">Stretch the picture to fill the screen</string>
+</resources>

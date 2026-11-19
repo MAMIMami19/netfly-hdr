@@ -176,6 +176,7 @@ fun SettingsScreen(
     onNavigateToPlugins: () -> Unit = {},
     onNavigateToAuthQrSignIn: () -> Unit = {},
     onNavigateToManageProfiles: () -> Unit = {},
+    onNavigateToAvatarGallery: () -> Unit = {},
     onNavigateToSupportersContributors: () -> Unit = {},
     onNavigateToLicensesAttributions: () -> Unit = {},
     onNavigateToWatchParty: () -> Unit = {},
@@ -656,6 +657,7 @@ fun SettingsScreen(
                                 integrationMdbListFocusRequester = integrationMdbListFocusRequester,
                                 integrationAnimeSkipFocusRequester = integrationAnimeSkipFocusRequester,
                                 onNavigateToManageProfiles = onNavigateToManageProfiles,
+                                onNavigateToAvatarGallery = onNavigateToAvatarGallery,
                                 onNavigateToAddons = onNavigateToAddons,
                                 onNavigateToPlugins = onNavigateToPlugins,
                                 onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
@@ -816,6 +818,7 @@ fun SettingsScreen(
                         integrationMdbListFocusRequester = integrationMdbListFocusRequester,
                         integrationAnimeSkipFocusRequester = integrationAnimeSkipFocusRequester,
                         onNavigateToManageProfiles = onNavigateToManageProfiles,
+                        onNavigateToAvatarGallery = onNavigateToAvatarGallery,
                         onNavigateToAddons = onNavigateToAddons,
                         onNavigateToPlugins = onNavigateToPlugins,
                         onNavigateToAuthQrSignIn = onNavigateToAuthQrSignIn,
@@ -846,6 +849,7 @@ private fun SettingsDetailPane(
     integrationMdbListFocusRequester: FocusRequester,
     integrationAnimeSkipFocusRequester: FocusRequester,
     onNavigateToManageProfiles: () -> Unit,
+    onNavigateToAvatarGallery: () -> Unit,
     onNavigateToAddons: () -> Unit,
     onNavigateToPlugins: () -> Unit,
     onNavigateToAuthQrSignIn: () -> Unit,
@@ -864,6 +868,7 @@ private fun SettingsDetailPane(
         )
         SettingsCategory.PROFILES -> ProfileSettingsContent(
             onManageProfiles = onNavigateToManageProfiles,
+            onOpenAvatarGallery = onNavigateToAvatarGallery,
             initialFocusRequester = if (allowDetailAutofocus) {
                 contentFocusRequesters[SettingsCategory.PROFILES]
             } else {

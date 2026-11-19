@@ -15,10 +15,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import com.nuvio.tv.R
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyKidsProfileSection
 
 @Composable
 internal fun ProfileSettingsContent(
     onManageProfiles: () -> Unit,
+    onOpenAvatarGallery: () -> Unit = {},
     initialFocusRequester: FocusRequester? = null
 ) {
     Column(
@@ -40,6 +42,18 @@ internal fun ProfileSettingsContent(
                     Modifier
                 }
             )
+        }
+        // Netfly HDR (§11): avatar gallery for the active profile.
+        SettingsGroupCard(modifier = Modifier.fillMaxWidth()) {
+            SettingsActionRow(
+                title = stringResource(R.string.netfly_avatar_gallery_row_title),
+                subtitle = stringResource(R.string.netfly_avatar_gallery_row_subtitle),
+                onClick = onOpenAvatarGallery
+            )
+        }
+        // Netfly HDR (§11): kids age-rating limit for the active profile.
+        SettingsGroupCard(modifier = Modifier.fillMaxWidth()) {
+            NetflyKidsProfileSection()
         }
     }
 }

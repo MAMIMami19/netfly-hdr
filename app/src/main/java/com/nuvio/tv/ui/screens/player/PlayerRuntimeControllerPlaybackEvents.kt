@@ -2112,56 +2112,11 @@ fun PlayerRuntimeController.onEvent(
             scope.launch { playerSettingsDataStore.resetSubtitleAppearance(resetHdrText = editingHdr) }
         }
         PlayerEvent.OnToggleAspectRatio -> {
-            val state = _uiState.value
-            if (state.tunnelingEnabled) {
-                val fill = !state.tunneledSurfaceFill
-                val label = PlayerDisplayModeUtils.resizeModeLabel(
-                    PlayerDisplayModeUtils.exoSurfaceResizeMode(
-                        tunnelingEnabled = true,
-                        tunneledSurfaceFill = fill
-                    ),
-                    context
-                )
-                Log.d(
-                    PlayerRuntimeController.TAG,
-                    "Tunneled surface resize toggled: fill=$fill ($label)"
-                )
-                _uiState.update {
-                    it.copy(
-                        tunneledSurfaceFill = fill,
-                        showAspectRatioIndicator = true,
-                        aspectRatioIndicatorText = label
-                    )
-                }
-                scope.launch {
-                    deviceLocalPlayerPreferences.setTunneledSurfaceFill(fill)
-                }
-                hideAspectRatioIndicatorJob?.cancel()
-                hideAspectRatioIndicatorJob = scope.launch {
-                    delay(1500)
-                    _uiState.update { it.copy(showAspectRatioIndicator = false) }
-                }
-                return
-            }
-            val newMode = nextAspectMode(state.aspectMode)
-            val label = aspectModeLabel(newMode, context::getString)
-            Log.d(PlayerRuntimeController.TAG, "Aspect mode toggled by user: ${state.aspectMode} -> $newMode ($label)")
-            _uiState.update {
-                it.copy(
-                    aspectMode = newMode,
-                    showAspectRatioIndicator = true,
-                    aspectRatioIndicatorText = label
-                )
-            }
-            scope.launch {
-                Log.d(PlayerRuntimeController.TAG, "Persisting aspect mode: $newMode")
-                deviceLocalPlayerPreferences.setAspectMode(newMode)
-            }
-            hideAspectRatioIndicatorJob?.cancel()
-            hideAspectRatioIndicatorJob = scope.launch {
-                delay(1500)
-                _uiState.update { it.copy(showAspectRatioIndicator = false) }
-            }
+            applyAspectMode(nextAspectMode(_uiState.value.aspectMode))
+        }
+        is PlayerEvent.OnSetAspectRatio -> {
+            // Netfly HDR: aspect-ratio picker (§13) sets one specific mode.
+            applyAspectMode(event.mode)
         }
         PlayerEvent.OnSwitchInternalPlayerEngine -> {
             logSwitchTrace(
@@ -2199,6 +2154,65 @@ fun PlayerRuntimeController.onEvent(
                 }
             }
         }
+    }
+}
+
+/**
+ * Applies an aspect-ratio mode chosen by the user (cycle via
+ * [PlayerEvent.OnToggleAspectRatio] or a specific mode via
+ * [PlayerEvent.OnSetAspectRatio]): updates state, persists the choice per
+ * device, and shows the 1.5s mode indicator. During tunneled playback the
+ * surface cannot be scaled, so the toggle flips the tunneled fill instead.
+ */
+internal fun PlayerRuntimeController.applyAspectMode(newMode: AspectMode) {
+    val state = _uiState.value
+    if (state.tunnelingEnabled) {
+        val fill = !state.tunneledSurfaceFill
+        val label = PlayerDisplayModeUtils.resizeModeLabel(
+            PlayerDisplayModeUtils.exoSurfaceResizeMode(
+                tunnelingEnabled = true,
+                tunneledSurfaceFill = fill
+            ),
+            context
+        )
+        Log.d(
+            PlayerRuntimeController.TAG,
+            "Tunneled surface resize toggled: fill=$fill ($label)"
+        )
+        _uiState.update {
+            it.copy(
+                tunneledSurfaceFill = fill,
+                showAspectRatioIndicator = true,
+                aspectRatioIndicatorText = label
+            )
+        }
+        scope.launch {
+            deviceLocalPlayerPreferences.setTunneledSurfaceFill(fill)
+        }
+        hideAspectRatioIndicatorJob?.cancel()
+        hideAspectRatioIndicatorJob = scope.launch {
+            delay(1500)
+            _uiState.update { it.copy(showAspectRatioIndicator = false) }
+        }
+        return
+    }
+    val label = aspectModeLabel(newMode, context::getString)
+    Log.d(PlayerRuntimeController.TAG, "Aspect mode set by user: ${state.aspectMode} -> $newMode ($label)")
+    _uiState.update {
+        it.copy(
+            aspectMode = newMode,
+            showAspectRatioIndicator = true,
+            aspectRatioIndicatorText = label
+        )
+    }
+    scope.launch {
+        Log.d(PlayerRuntimeController.TAG, "Persisting aspect mode: $newMode")
+        deviceLocalPlayerPreferences.setAspectMode(newMode)
+    }
+    hideAspectRatioIndicatorJob?.cancel()
+    hideAspectRatioIndicatorJob = scope.launch {
+        delay(1500)
+        _uiState.update { it.copy(showAspectRatioIndicator = false) }
     }
 }
 

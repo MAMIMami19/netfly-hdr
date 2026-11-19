@@ -6,6 +6,7 @@ import android.util.Log
 import com.nuvio.tv.data.local.MemberCatalogStorage
 import com.nuvio.tv.domain.model.ServerConfiguration
 import com.nuvio.tv.domain.model.UserProfile
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyLocalAvatars
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
@@ -89,14 +90,16 @@ class AvatarRepository @Inject constructor(
     private var lastMemberRefreshAtMs = 0L
 
     suspend fun getAvatarCatalog(hasMemberAccess: Boolean = false): List<AvatarCatalogItem> {
+        // Netfly HDR: the built-in original avatars always come first and work offline.
+        val localCatalog = NetflyLocalAvatars.catalog(context)
         val hadStandardCache = cachedStandardCatalog != null
         val standardCatalog = getStandardAvatarCatalog()
         if (hadStandardCache) refreshStandardCatalogInBackground()
-        if (!hasMemberAccess) return standardCatalog
+        if (!hasMemberAccess) return localCatalog + standardCatalog
         val hadMemberCache = cachedMemberCatalog != null
         val memberCatalog = getMemberAvatarCatalog()
         if (hadMemberCache) refreshMemberCatalogInBackground()
-        return standardCatalog + memberCatalog
+        return localCatalog + standardCatalog + memberCatalog
     }
 
     private suspend fun getStandardAvatarCatalog(): List<AvatarCatalogItem> {

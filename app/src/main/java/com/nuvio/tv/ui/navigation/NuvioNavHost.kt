@@ -65,6 +65,7 @@ import com.nuvio.tv.ui.screens.home.ContinueWatchingItem
 import com.nuvio.tv.ui.screens.account.AuthQrSignInScreen
 import com.nuvio.tv.ui.screens.cast.CastDetailScreen
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionMode
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyAvatarGalleryScreen
 import com.nuvio.tv.ui.screens.profile.ProfileSelectionScreen
 import com.nuvio.tv.ui.screens.tmdb.TmdbEntityBrowseScreen
 import com.nuvio.tv.ui.screens.home.HeroBackdropState
@@ -1301,6 +1302,7 @@ private fun PlaybackNavHost(
                 onNavigateToPlugins = { navController.navigate(Screen.Plugins.route) },
                 onNavigateToAuthQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
                 onNavigateToManageProfiles = { navController.navigate(Screen.ManageProfiles.route) },
+                onNavigateToAvatarGallery = { navController.navigate(Screen.NetflyAvatarGallery.route) },
                 onNavigateToSupportersContributors = {
                     navController.navigate(Screen.SupportersContributors.route)
                 },
@@ -1331,6 +1333,13 @@ private fun PlaybackNavHost(
             ProfileSelectionScreen(
                 onProfileSelected = {},
                 screenMode = ProfileSelectionMode.Management,
+                onBackPress = { navController.popBackStack() }
+            )
+        }
+
+        // Netfly HDR: avatar gallery (design §11).
+        composable(Screen.NetflyAvatarGallery.route) {
+            NetflyAvatarGalleryScreen(
                 onBackPress = { navController.popBackStack() }
             )
         }

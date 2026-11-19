@@ -123,6 +123,7 @@ import com.nuvio.tv.ui.components.CustomProfileBackgroundImage
 import com.nuvio.tv.ui.components.MemberBrandWordmark
 import com.nuvio.tv.ui.components.NuvioDialog
 import com.nuvio.tv.ui.components.ProfileBackgroundImage
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyProfilePickerGlow
 import com.nuvio.tv.ui.components.ProfileBackgroundPicker
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.components.ProfileEditorTab
@@ -925,11 +926,21 @@ private fun ProfileSelectionMainContent(
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MemberBrandWordmark(
-            height = ProfileSelectionSpacing.LogoHeight,
-            contentDescription = stringResource(R.string.cd_nuvio_logo),
-            drawableOverride = brandWordmarkRes
-        )
+        Box(contentAlignment = Alignment.Center) {
+            // Netfly HDR (§11): red background glow (0.55 alpha) behind the logo.
+            // The zero-size anchor keeps the 640dp glow from affecting layout.
+            Box(
+                modifier = Modifier.size(0.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                NetflyProfilePickerGlow()
+            }
+            MemberBrandWordmark(
+                height = ProfileSelectionSpacing.LogoHeight,
+                contentDescription = stringResource(R.string.cd_nuvio_logo),
+                drawableOverride = brandWordmarkRes
+            )
+        }
 
         Spacer(modifier = Modifier.height(ProfileSelectionSpacing.LogoToHeading))
 
