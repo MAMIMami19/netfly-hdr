@@ -60,16 +60,25 @@ fun NuvioTheme(
     amoledSurfacesMode: Boolean = false,
     settingsUiStyle: SettingsUiStyle = SettingsUiStyle.CLASSIC,
     customThemeColors: CustomThemeColors = CustomThemeColors.Default,
+    // Netfly HDR: when a Netfly red theme is active, MainActivity passes its
+    // exact palette here and it replaces the base AppTheme palette wholesale,
+    // so the whole app follows it via MaterialTheme.colorScheme (and
+    // NuvioTheme.colors). Null means "use the base theme".
+    paletteOverride: ThemeColorPalette? = null,
+    // Netfly HDR: light mode for the active Netfly theme (dark text on light
+    // surfaces). Only meaningful together with paletteOverride.
+    isLight: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val palette = androidx.compose.runtime.remember(appTheme, customThemeColors) {
-        ThemeColors.getColorPalette(appTheme, customThemeColors)
+    val palette = androidx.compose.runtime.remember(appTheme, customThemeColors, paletteOverride) {
+        paletteOverride ?: ThemeColors.getColorPalette(appTheme, customThemeColors)
     }
     val focusRingStyle = createFocusRingStyle(palette)
     val colorScheme = NuvioColorScheme(
         palette = palette,
         amoledMode = amoledMode,
-        amoledSurfacesMode = amoledSurfacesMode
+        amoledSurfacesMode = amoledSurfacesMode,
+        isLight = isLight
     )
     val typography = buildNuvioTypography(getFontFamily(appFont))
     val textStyles = buildNuvioTextStyles(typography)

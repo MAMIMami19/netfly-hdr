@@ -74,6 +74,7 @@ import com.nuvio.tv.domain.model.AppTheme
 import com.nuvio.tv.domain.model.CustomThemeColors
 import com.nuvio.tv.domain.model.SettingsUiStyle
 import com.nuvio.tv.ui.components.NuvioDialog
+import com.nuvio.tv.ui.netflyhdr.themes.NetflyThemeManagerDialog
 import com.nuvio.tv.ui.screens.detail.requestFocusAfterFrames
 import com.nuvio.tv.ui.theme.ThemeColors
 import com.nuvio.tv.ui.theme.accentBrush
@@ -106,6 +107,7 @@ fun ThemeSettingsContent(
     var showFontDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showAppIconDialog by remember { mutableStateOf(false) }
+    var showNetflyThemeManager by remember { mutableStateOf(false) }
     var showCustomThemeDialog by remember(uiState.customThemeGradientEnabled) { mutableStateOf(false) }
     var restoreCustomThemeFocus by remember { mutableStateOf(false) }
     var appIconConfirmation by remember { mutableStateOf<AppIconOption?>(null) }
@@ -291,6 +293,19 @@ fun ThemeSettingsContent(
                 }
             }
 
+            // Netfly HDR: the 10 red themes live in their own manager dialog.
+            SettingsGroupCard(
+                modifier = Modifier.fillMaxWidth(),
+                title = stringResource(R.string.netfly_theme_manager_title),
+                subtitle = stringResource(R.string.netfly_theme_settings_row_subtitle)
+            ) {
+                SettingsActionRow(
+                    title = stringResource(R.string.netfly_theme_settings_row_title),
+                    subtitle = stringResource(R.string.netfly_theme_presets_label),
+                    onClick = { showNetflyThemeManager = true }
+                )
+            }
+
             SettingsGroupCard(
                 modifier = Modifier.fillMaxWidth(),
                 title = stringResource(R.string.appearance_launcher_artwork),
@@ -341,6 +356,12 @@ fun ThemeSettingsContent(
                 showCustomThemeDialog = false
             },
             onDismiss = { showCustomThemeDialog = false }
+        )
+    }
+
+    if (showNetflyThemeManager) {
+        NetflyThemeManagerDialog(
+            onDismiss = { showNetflyThemeManager = false }
         )
     }
 

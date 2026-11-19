@@ -102,7 +102,11 @@ data class NuvioContrastPair(
 class NuvioColorScheme(
     palette: ThemeColorPalette,
     amoledMode: Boolean = false,
-    amoledSurfacesMode: Boolean = false
+    amoledSurfacesMode: Boolean = false,
+    // Netfly HDR: light mode flips the hardcoded text/divider colors to dark
+    // values so the light palettes (white surfaces) stay readable. The palette
+    // itself already carries the light backgrounds/surfaces.
+    isLight: Boolean = false
 ) {
     private val pureBlack = NuvioPrimitives.black
     private val pureBlackSurfaces = amoledMode && amoledSurfacesMode
@@ -118,7 +122,7 @@ class NuvioColorScheme(
     val Menu = if (pureBlackSurfaces) pureBlack else palette.menu
     val Modal = if (pureBlackSurfaces) pureBlack else palette.modal
     val PlayerOverlay = palette.playerOverlay
-    val Divider = NuvioPrimitives.neutral750
+    val Divider = if (isLight) Color(0xFFD8D8D8) else NuvioPrimitives.neutral750
 
     val Primary = NuvioPrimitives.neutral500
     val PrimaryVariant = NuvioPrimitives.neutral650
@@ -128,15 +132,15 @@ class NuvioColorScheme(
     val OnSecondary = palette.onSecondary
     val OnSecondaryVariant = palette.onSecondaryVariant
 
-    val TextPrimary = NuvioPrimitives.white
-    val TextSecondary = NuvioPrimitives.neutral400
-    val TextTertiary = NuvioPrimitives.neutral600
-    val TextDisabled = NuvioPrimitives.neutral700
-    val TextInverse = NuvioPrimitives.neutral925
+    val TextPrimary = if (isLight) Color(0xFF1A1A1A) else NuvioPrimitives.white
+    val TextSecondary = if (isLight) Color(0xFF555555) else NuvioPrimitives.neutral400
+    val TextTertiary = if (isLight) Color(0xFF8A8A8A) else NuvioPrimitives.neutral600
+    val TextDisabled = if (isLight) Color(0xFFB0B0B0) else NuvioPrimitives.neutral700
+    val TextInverse = if (isLight) NuvioPrimitives.white else NuvioPrimitives.neutral925
 
     val FocusRing = palette.focusRing
     val FocusBackground = palette.focusBackground
-    val FocusContent = NuvioPrimitives.white
+    val FocusContent = if (isLight) Color(0xFF1A1A1A) else NuvioPrimitives.white
     val FocusScrim = NuvioPrimitives.black.copy(alpha = 0.32f)
 
     val Rating = NuvioPrimitives.rating
@@ -150,9 +154,9 @@ class NuvioColorScheme(
     val Torrent = NuvioPrimitives.torrent
     val Premium = NuvioPrimitives.premium
 
-    val Border = NuvioPrimitives.neutral750
+    val Border = if (isLight) Color(0xFFD8D8D8) else NuvioPrimitives.neutral750
     val BorderFocused = FocusRing
-    val BorderMuted = NuvioPrimitives.neutral750.copy(alpha = 0.58f)
+    val BorderMuted = Border.copy(alpha = 0.58f)
 
     val Scrim = NuvioPrimitives.black.copy(alpha = 0.62f)
     val ImageScrim = NuvioPrimitives.black.copy(alpha = 0.58f)

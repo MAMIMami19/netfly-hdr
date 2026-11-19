@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.tv.R
+import com.nuvio.tv.ui.netflyhdr.home.NetflyHomeSettingsDialog
 import com.nuvio.tv.ui.screens.addon.QrCodeOverlay
 
 @Composable
@@ -67,6 +68,7 @@ fun LayoutSettingsContent(
     }
     val customPosterQrFocusRequester = remember { FocusRequester() }
     val streamBadgeQrFocusRequester = remember { FocusRequester() }
+    var showNetflyHomeSettings by remember { mutableStateOf(false) }
 
     LaunchedEffect(streamBadgeUiState.serverError) {
         val error = streamBadgeUiState.serverError ?: return@LaunchedEffect
@@ -83,6 +85,19 @@ fun LayoutSettingsContent(
                 if (essentialMode) R.string.layout_selection_subtitle else R.string.layout_subtitle
             )
         )
+
+        // Netfly HDR: the 10 home layouts and home settings live in their own dialog.
+        SettingsGroupCard(
+            modifier = Modifier.fillMaxWidth(),
+            title = stringResource(R.string.netfly_home_settings_title),
+            subtitle = stringResource(R.string.netfly_home_settings_row_subtitle)
+        ) {
+            SettingsActionRow(
+                title = stringResource(R.string.netfly_home_settings_row_title),
+                subtitle = stringResource(R.string.netfly_home_layouts_label),
+                onClick = { showNetflyHomeSettings = true }
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -158,6 +173,12 @@ fun LayoutSettingsContent(
             )
         }
         }
+    }
+
+    if (showNetflyHomeSettings) {
+        NetflyHomeSettingsDialog(
+            onDismiss = { showNetflyHomeSettings = false }
+        )
     }
 }
 

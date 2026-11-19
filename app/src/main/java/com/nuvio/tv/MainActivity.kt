@@ -184,6 +184,10 @@ import com.nuvio.tv.ui.components.LocalLandscapePosterMode
 import com.nuvio.tv.ui.components.LocalAlwaysBackdropWithLogo
 import com.nuvio.tv.ui.components.ProfileAvatarCircle
 import com.nuvio.tv.ui.navigation.LocalNavViewModelStoreOwner
+import com.nuvio.tv.ui.netflyhdr.home.LocalNetflyHomePrefs
+import com.nuvio.tv.ui.netflyhdr.home.NetflyHomePrefs
+import com.nuvio.tv.ui.netflyhdr.themes.NetflyHdrDataStore
+import com.nuvio.tv.ui.netflyhdr.themes.NetflyHdrState
 import com.nuvio.tv.ui.navigation.NuvioNavHost
 import com.nuvio.tv.ui.navigation.Screen
 import com.nuvio.tv.ui.netflyhdr.NetflyHdrRoutes
@@ -268,7 +272,10 @@ private data class MainUiPrefs(
     val settingsUiStyle: SettingsUiStyle = SettingsUiStyle.CLASSIC,
     val cardDepthStyle: CardDepthStyle = CardDepthStyle(),
     val landscapePosterMode: Boolean = false,
-    val alwaysBackdropWithLogo: Boolean = false
+    val alwaysBackdropWithLogo: Boolean = false,
+    // Netfly HDR per-profile theme + home state (red theme, accent, light
+    // mode, reduce-motion, home layout, hero mode, titles-per-row).
+    val netflyHdrState: NetflyHdrState = NetflyHdrState()
 )
 
 @AndroidEntryPoint
@@ -276,6 +283,9 @@ open class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var themeDataStore: ThemeDataStore
+
+    @Inject
+    lateinit var netflyHdrDataStore: NetflyHdrDataStore
 
     @Inject
     lateinit var layoutPreferenceDataStore: LayoutPreferenceDataStore
@@ -516,7 +526,8 @@ open class MainActivity : ComponentActivity() {
                 themeDataStore,
                 layoutPreferenceDataStore,
                 experienceModeDataStore,
-                memberAccessRepository
+                memberAccessRepository,
+                netflyHdrDataStore
             ) {
                 val activeThemeFlow = combine(
                     themeDataStore.themeSelection,
@@ -606,6 +617,12 @@ open class MainActivity : ComponentActivity() {
                         alwaysBackdropWithLogo = alwaysBackdropWithLogo
                     )
                 }
+                    // Netfly HDR state rides along as a chained 2-flow
+                    // combine: a 6-flow combine() with a destructured
+                    // lambda parameter fails overload resolution here.
+                    .combine(netflyHdrDataStore.state) { prefs, netflyHdrState ->
+                        prefs.copy(netflyHdrState = netflyHdrState)
+                    }
             }
             val mainUiPrefs by key(activeProfileId, startupSession) {
                 mainUiPrefsFlow.collectAsState(initial = MainUiPrefs(hasChosenLayout = null))
@@ -617,13 +634,34 @@ open class MainActivity : ComponentActivity() {
             }
             val discoverLocation = mainUiPrefs.discoverLocation
 
+            // Netfly HDR: while a Netfly red theme is active, its exact
+            // palette replaces the base AppTheme palette for the whole app
+            // (via NuvioTheme's paletteOverride -> MaterialTheme.colorScheme).
+            // When the user goes back to Nuvio themes, the override is null
+            // and the base theme selection applies again.
+            val netflyHdrState = mainUiPrefs.netflyHdrState
+            val netflyPaletteOverride = remember(netflyHdrState) {
+                if (netflyHdrState.netflyThemeEnabled) netflyHdrState.toColorPalette() else null
+            }
+            val netflyIsLight = netflyHdrState.netflyThemeEnabled && netflyHdrState.lightMode
+            val netflyHomePrefs = remember(netflyHdrState) {
+                NetflyHomePrefs(
+                    layout = netflyHdrState.homeLayout,
+                    heroMode = netflyHdrState.heroMode,
+                    titlesPerRow = netflyHdrState.titlesPerRow,
+                    reduceMotion = netflyHdrState.reduceMotion
+                )
+            }
+
             NuvioTheme(
                 appTheme = mainUiPrefs.theme,
                 customThemeColors = mainUiPrefs.customThemeColors,
                 appFont = mainUiPrefs.font,
                 amoledMode = mainUiPrefs.amoledMode,
                 amoledSurfacesMode = mainUiPrefs.amoledSurfacesMode,
-                settingsUiStyle = mainUiPrefs.settingsUiStyle
+                settingsUiStyle = mainUiPrefs.settingsUiStyle,
+                paletteOverride = netflyPaletteOverride,
+                isLight = netflyIsLight
             ) {
                 val defaultBringIntoViewSpec = LocalBringIntoViewSpec.current
                 val bringIntoViewSpec = if (mainUiPrefs.smoothBringIntoViewEnabled) {
@@ -723,6 +761,7 @@ open class MainActivity : ComponentActivity() {
                     LocalCardDepthStyle provides mainUiPrefs.cardDepthStyle,
                     LocalLandscapePosterMode provides mainUiPrefs.landscapePosterMode,
                     LocalAlwaysBackdropWithLogo provides mainUiPrefs.alwaysBackdropWithLogo,
+                    LocalNetflyHomePrefs provides netflyHomePrefs,
                     LocalMemberAccess provides mainUiPrefs.memberAccess,
                     LocalAmbientIdleController provides ambientIdleController,
                     com.nuvio.tv.core.player.LocalTrailerPlayerPool provides trailerPlayerPool,

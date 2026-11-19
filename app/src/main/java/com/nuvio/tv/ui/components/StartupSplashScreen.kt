@@ -24,6 +24,8 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.nuvio.tv.R
+import com.nuvio.tv.ui.netflyhdr.themes.NETFLY_RED
+import com.nuvio.tv.ui.netflyhdr.themes.NetflySplashScreen
 import com.nuvio.tv.ui.theme.NuvioPrimitives
 import com.nuvio.tv.ui.theme.NuvioTheme
 
@@ -36,10 +38,17 @@ fun StartupSplashScreen(
     brandWordmarkRes: Int? = null,
     modifier: Modifier = Modifier
 ) {
+    // Netfly HDR: with no profile background and no profile color, show the
+    // branded black + red-glow splash instead of the generic gradient.
+    if (profileBackgroundUrl.isNullOrBlank() && profileColorHex == null && !skipGradient) {
+        NetflySplashScreen(modifier = modifier)
+        return
+    }
+
     val avatarColor = remember(profileColorHex) {
         profileColorHex?.let {
             runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull()
-        } ?: NuvioPrimitives.blue500
+        } ?: NETFLY_RED
     }
 
     Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
