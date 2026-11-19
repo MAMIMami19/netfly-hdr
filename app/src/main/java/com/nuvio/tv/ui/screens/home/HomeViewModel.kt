@@ -23,6 +23,8 @@ import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.ContinueWatchingEnrichmentCache
 import com.nuvio.tv.data.mediaserver.ServerCatalog
 import com.nuvio.tv.data.trailer.TrailerService
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyKidsProfileStore
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyKidsSettings
 import com.nuvio.tv.domain.model.Addon
 import com.nuvio.tv.domain.model.CatalogDescriptor
 import com.nuvio.tv.domain.model.CatalogRow
@@ -87,6 +89,10 @@ class HomeViewModel @Inject constructor(
     internal val watchedSeriesStateHolder: com.nuvio.tv.data.local.WatchedSeriesStateHolder,
     internal val cwEnrichmentCache: ContinueWatchingEnrichmentCache,
     internal val profileManager: com.nuvio.tv.core.profile.ProfileManager,
+    // Netfly HDR: per-profile kids age-rating limit. Nullable with a null
+    // default so existing unit-test constructions keep compiling; Hilt
+    // always provides the real store in the app.
+    internal val netflyKidsProfileStore: NetflyKidsProfileStore? = null,
     internal val tvRecommendationManager: TvRecommendationManager,
     internal val serverCatalog: ServerCatalog,
     internal val metaPreviewEnricher: MetaPreviewEnricher = MetaPreviewEnricher(
@@ -257,6 +263,9 @@ class HomeViewModel @Inject constructor(
     internal var trailerPreviewRequestVersion: Long = 0L
     internal var trailerPreviewJob: Job? = null
     internal var currentTmdbSettings: TmdbSettings = TmdbSettings()
+    // Netfly HDR: kids age-rating limit for the active profile (disabled by
+    // default). Read by updateCatalogRowsPipeline when filtering home rows.
+    internal var currentKidsSettings: NetflyKidsSettings = NetflyKidsSettings()
     internal var currentMdbListSettings: MDBListSettings = MDBListSettings()
     internal var heroEnrichmentJob: Job? = null
     internal var lastHeroEnrichmentSignature: String? = null
@@ -387,6 +396,7 @@ class HomeViewModel @Inject constructor(
             observeLibraryState()
             observeTmdbSettings()
             observeMdbListSettings()
+            observeNetflyKidsSettings()
             observeBlurUnwatchedEpisodes()
             observeProgressSourceChanges()
             observeCollections()
@@ -648,6 +658,22 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+    }
+
+    /**
+     * Netfly HDR: per-profile kids age-rating limit. The store's flow follows
+     * the active profile, so a profile switch re-filters home rows too.
+     * No-op in unit tests, where the store is null.
+     */
+    private fun observeNetflyKidsSettings() {
+        val store = netflyKidsProfileStore ?: return
+        viewModelScope.launch {
+            store.settings.collectLatest { settings ->
+                val changed = currentKidsSettings != settings
+                currentKidsSettings = settings
+                if (changed) scheduleUpdateCatalogRows()
+            }
         }
     }
 

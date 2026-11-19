@@ -81,6 +81,10 @@ import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.MetaPreview
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.ContinueWatchingOptionsDialog
+import com.nuvio.tv.ui.netflyhdr.home.LocalNetflyHomePrefs
+import com.nuvio.tv.ui.netflyhdr.home.NetflyHeroCarouselHost
+import com.nuvio.tv.ui.netflyhdr.home.NetflyHeroMode
+import com.nuvio.tv.ui.netflyhdr.home.toNetflyHeroItem
 import com.nuvio.tv.LocalSidebarExpanded
 import com.nuvio.tv.LocalContentFocusRequester
 import com.nuvio.tv.ui.util.LocalRecompositionHighlighterEnabled
@@ -187,14 +191,18 @@ fun ModernHomeContent(
     if (carouselRows.list.isEmpty()) {
         if (uiState.heroSectionEnabled && uiState.heroItems.isNotEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {
-                com.nuvio.tv.ui.components.HeroCarousel(
-                    items = uiState.heroItems.asStable(),
-                    showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
-                    descriptionAutoScrollEnabled = uiState.heroDescriptionAutoScrollEnabled,
-                    onItemClick = { item ->
-                        onNavigateToDetail(item.id, item.apiType, "")
-                    },
-                    onItemFocus = { item -> onItemFocus(item) }
+                // Netfly HDR: the Netfly hero carousel (no rows here, so no
+                // bottom inset needed for FULLSCREEN mode).
+                NetflyHeroSection(
+                    heroItems = uiState.heroItems,
+                    mode = LocalNetflyHomePrefs.current.heroMode,
+                    trailerPreviewUrls = trailerPreviewUrls,
+                    trailerPreviewAudioUrls = trailerPreviewAudioUrls,
+                    bottomContentPadding = 0.dp,
+                    onNavigateToDetail = onNavigateToDetail,
+                    onItemFocus = onItemFocus,
+                    onRequestTrailerPreview = onRequestTrailerPreview,
+                    modifier = Modifier.align(Alignment.TopStart)
                 )
             }
         }
@@ -709,6 +717,12 @@ fun ModernHomeContent(
             val posterCardCornerRadius = remember(uiState.posterCardCornerRadiusDp) { uiState.posterCardCornerRadiusDp.dp }
             val rowHorizontalPadding = 52.dp
 
+            // Netfly HDR: the Netfly hero carousel replaces the
+            // focus-following base hero when the hero section is enabled and
+            // hero items exist; otherwise the base hero stays as the
+            // fallback (e.g. no hero catalogs configured).
+            val showNetflyHero = uiState.heroSectionEnabled && uiState.heroItems.isNotEmpty()
+
             val activeCarouselItemState = remember(carouselRows, rowByKey) {
                 derivedStateOf {
                     val activeKey = activeRowKey.value
@@ -898,8 +912,10 @@ fun ModernHomeContent(
                 }
             }
             // Keep the top-level flag in sync so the row-scroll BackHandler
-            // stays disabled while a fullscreen trailer is visible.
-            fullscreenTrailerPlaying.value = isTrailerPlayingFullscreenState.value
+            // stays disabled while a fullscreen trailer is visible. Only
+            // when the base hero is showing — the Netfly hero plays its own
+            // trailers and has no fullscreen-trailer Back action.
+            fullscreenTrailerPlaying.value = isTrailerPlayingFullscreenState.value && !showNetflyHero
             fullscreenTrailerDismiss.value = remember(focusedCatalogSelection, expandedCatalogFocusKey) {
                 {
                     focusedCatalogSelection.value = null
@@ -1102,20 +1118,46 @@ fun ModernHomeContent(
             }
             val onFirstFrameRenderedLambda = remember { { heroTrailerFirstFrameRendered = true } }
 
-            ModernHeroSection(
-                heroSceneState = heroSceneStateLambda,
-                isFullScreen = isFullScreenLambda,
-                heroMediaWidthPx = heroMediaWidthPx,
-                heroMediaHeightPx = heroMediaHeightPx,
-                modifier = heroMediaModifier,
-                onTrailerEnded = onTrailerEndedLambda,
-                onFirstFrameRendered = onFirstFrameRenderedLambda
-            )
+            // Netfly HDR: the Netfly hero carousel in place of the base hero
+            // section. It renders its own text block, backdrop and trailer,
+            // so the base hero media + HeroTitleBlock below are skipped when
+            // it shows. The base hero stays as the fallback when there are no
+            // hero items. Mode comes from the Netfly home prefs (PANEL
+            // default); reduce-motion is honored inside the hero itself (no
+            // trailer autoplay, no auto-advance).
+            if (showNetflyHero) {
+                val netflyHeroMode = LocalNetflyHomePrefs.current.heroMode
+                NetflyHeroSection(
+                    heroItems = uiState.heroItems,
+                    mode = netflyHeroMode,
+                    trailerPreviewUrls = trailerPreviewUrls,
+                    trailerPreviewAudioUrls = trailerPreviewAudioUrls,
+                    // FULLSCREEN anchors its text at the bottom of the screen,
+                    // so lift it above the rows list; PANEL/BARE center theirs.
+                    bottomContentPadding = if (netflyHeroMode == NetflyHeroMode.FULLSCREEN) rowsViewportHeight else 0.dp,
+                    onNavigateToDetail = onNavigateToDetail,
+                    onItemFocus = onItemFocus,
+                    onRequestTrailerPreview = onRequestTrailerPreview,
+                    modifier = Modifier.align(Alignment.TopStart)
+                )
+            } else {
+                ModernHeroSection(
+                    heroSceneState = heroSceneStateLambda,
+                    isFullScreen = isFullScreenLambda,
+                    heroMediaWidthPx = heroMediaWidthPx,
+                    heroMediaHeightPx = heroMediaHeightPx,
+                    modifier = heroMediaModifier,
+                    onTrailerEnded = onTrailerEndedLambda,
+                    onFirstFrameRendered = onFirstFrameRenderedLambda
+                )
+            }
 
             // Fade content rows when ANY hero media (catalog trailer or collection
             // hero video) is playing in fullscreen — not just catalog trailers.
+            // Only when the base hero is showing: with the Netfly hero, no base
+            // hero trailer plays, so fading the rows would hide them for nothing.
             val trailerContentAlphaState = animateFloatAsState(
-                targetValue = if (fullScreenBackdropUpdated && (shouldPlayCatalogHeroTrailerUpdated || shouldPlayCollectionHeroVideoUpdated) && heroTrailerFirstFrameRenderedUpdated) 0f else 1f,
+                targetValue = if (!showNetflyHero && fullScreenBackdropUpdated && (shouldPlayCatalogHeroTrailerUpdated || shouldPlayCollectionHeroVideoUpdated) && heroTrailerFirstFrameRenderedUpdated) 0f else 1f,
                 animationSpec = tween(durationMillis = 480),
                 label = "trailerContentFade"
             )
@@ -1130,30 +1172,34 @@ fun ModernHomeContent(
                     .fillMaxWidth(MODERN_HERO_TEXT_WIDTH_FRACTION)
             }
 
-            HeroTitleBlock(
-                previewProvider = {
-                    val state = heroSceneStateLambda()
-                    if (isRapidHorizontalNav.value || state.enrichmentActive) null
-                    else state.preview
-                },
-                enrichmentActive = {
-                    if (isRapidHorizontalNav.value) false
-                    else heroSceneStateLambda().enrichmentActive
-                },
-                portraitMode = !useLandscapePosters,
-                showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
-                mdbListShowOnHero = uiState.mdbListShowOnHero,
-                mdbListRatingOrder = uiState.mdbListRatingOrder,
-                trailerPlaying = {
-                    if (isRapidHorizontalNav.value) false
-                    else {
+            // The Netfly hero renders its own text block; the base title block
+            // only shows with the base hero fallback.
+            if (!showNetflyHero) {
+                HeroTitleBlock(
+                    previewProvider = {
                         val state = heroSceneStateLambda()
-                        state.fullScreenBackdrop && shouldPlayTrailerLambda() && heroTrailerRenderedLambda()
-                    }
-                },
-                descriptionAutoScrollEnabled = uiState.heroDescriptionAutoScrollEnabled,
-                modifier = heroMetadataModifier
-            )
+                        if (isRapidHorizontalNav.value || state.enrichmentActive) null
+                        else state.preview
+                    },
+                    enrichmentActive = {
+                        if (isRapidHorizontalNav.value) false
+                        else heroSceneStateLambda().enrichmentActive
+                    },
+                    portraitMode = !useLandscapePosters,
+                    showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
+                    mdbListShowOnHero = uiState.mdbListShowOnHero,
+                    mdbListRatingOrder = uiState.mdbListRatingOrder,
+                    trailerPlaying = {
+                        if (isRapidHorizontalNav.value) false
+                        else {
+                            val state = heroSceneStateLambda()
+                            state.fullScreenBackdrop && shouldPlayTrailerLambda() && heroTrailerRenderedLambda()
+                        }
+                    },
+                    descriptionAutoScrollEnabled = uiState.heroDescriptionAutoScrollEnabled,
+                    modifier = heroMetadataModifier
+                )
+            }
 
             val latestOnFocusedRowKeyChanged by rememberUpdatedState(onFocusedRowKeyChanged)
             val onActiveRowKeyChangeLambda = remember {
@@ -1321,6 +1367,52 @@ fun ModernHomeContent(
         )
     }
 }
+/**
+ * Netfly HDR hero: hosts the rotating [NetflyHeroCarouselHost] over the
+ * home's hero items. The trailer pipeline resolves only the latest request,
+ * so the trailer is requested for the current carousel item on focus — never
+ * for all items at once. OK opens the current item's detail screen.
+ */
+@Composable
+private fun NetflyHeroSection(
+    heroItems: List<MetaPreview>,
+    mode: NetflyHeroMode,
+    trailerPreviewUrls: Map<String, String>,
+    trailerPreviewAudioUrls: Map<String, String>,
+    bottomContentPadding: Dp,
+    onNavigateToDetail: (String, String, String) -> Unit,
+    onItemFocus: (MetaPreview) -> Unit,
+    onRequestTrailerPreview: (String, String, String?, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val heroById = remember(heroItems) { heroItems.associateBy { it.id } }
+    val items = remember(heroItems) { heroItems.map { it.toNetflyHeroItem() } }
+    NetflyHeroCarouselHost(
+        items = items,
+        mode = mode,
+        trailerUrls = trailerPreviewUrls,
+        trailerAudioUrls = trailerPreviewAudioUrls,
+        bottomContentPadding = bottomContentPadding,
+        onItemClick = { heroItem ->
+            heroById[heroItem.key]?.let { preview ->
+                onNavigateToDetail(preview.id, preview.apiType, "")
+            }
+        },
+        onItemFocus = { heroItem ->
+            heroById[heroItem.key]?.let { preview ->
+                onItemFocus(preview)
+                onRequestTrailerPreview(
+                    preview.id,
+                    preview.name,
+                    preview.releaseInfo,
+                    preview.apiType
+                )
+            }
+        },
+        modifier = modifier
+    )
+}
+
 @Composable
 private fun ModernHeroSection(
     heroSceneState: () -> ModernHeroSceneState,

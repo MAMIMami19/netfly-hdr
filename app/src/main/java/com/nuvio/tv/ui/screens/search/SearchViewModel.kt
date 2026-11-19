@@ -22,6 +22,8 @@ import com.nuvio.tv.domain.model.stableKey
 import com.nuvio.tv.domain.model.supportsExtra
 import com.nuvio.tv.core.util.filterReleasedItems
 import com.nuvio.tv.core.util.isUnreleased
+import com.nuvio.tv.ui.netflyhdr.profiles.NetflyKidsProfileStore
+import com.nuvio.tv.ui.netflyhdr.profiles.filterKidsItems
 import com.nuvio.tv.domain.repository.AddonRepository
 import java.time.LocalDate
 import com.nuvio.tv.domain.model.ContentType
@@ -59,6 +61,10 @@ class SearchViewModel @Inject constructor(
     private val watchedSeriesStateHolder: com.nuvio.tv.data.local.WatchedSeriesStateHolder,
     val posterOptions: com.nuvio.tv.ui.components.posteroptions.PosterOptionsController,
     private val serverCatalog: ServerCatalog,
+    // Netfly HDR: per-profile kids age-rating limit. Nullable with a null
+    // default so existing unit-test constructions keep compiling; Hilt
+    // always provides the real store in the app.
+    private val netflyKidsProfileStore: NetflyKidsProfileStore? = null,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -100,6 +106,8 @@ class SearchViewModel @Inject constructor(
     private var lastNonEmptyQuery: String = ""
     private var revealBatchAfterNextDiscoverFetch = false
     private var hideUnreleasedContent = false
+    // Netfly HDR: kids age-rating cap for the active profile (null = off).
+    private var kidsMaxAge: Int? = null
 
     private companion object {
         const val DISCOVER_INITIAL_LIMIT = 100
@@ -180,6 +188,16 @@ class SearchViewModel @Inject constructor(
             layoutPreferenceDataStore.hideUnreleasedContent.collectLatest { enabled ->
                 hideUnreleasedContent = enabled
                 scheduleCatalogRowsUpdate()
+            }
+        }
+        // Netfly HDR: re-filter search rows when the active profile's kids
+        // setting changes. No-op in unit tests, where the store is null.
+        netflyKidsProfileStore?.let { store ->
+            viewModelScope.launch {
+                store.settings.collectLatest { settings ->
+                    kidsMaxAge = settings.takeIf { it.enabled }?.maxAgeYears
+                    scheduleCatalogRowsUpdate()
+                }
             }
         }
         viewModelScope.launch {
@@ -890,6 +908,8 @@ class SearchViewModel @Inject constructor(
     }
 
     private fun updateCatalogRowsNow() {
+        // Netfly HDR: kids age-rating cap for the active profile (null = off).
+        val maxAge = kidsMaxAge
         _uiState.update { state ->
             val orderedRows = catalogOrder.map { key ->
                 catalogsMap[key]
@@ -903,7 +923,7 @@ class SearchViewModel @Inject constructor(
                     row.items.firstOrNull()?.id?.startsWith("__placeholder_") == true
                 isPlaceholder || row.items.isNotEmpty()
             }
-            val filteredRows = if (hideUnreleasedContent) {
+            val filteredRows = (if (hideUnreleasedContent) {
                 val today = LocalDate.now()
                 orderedRows.map { row ->
                     if (row.isLoading && row.items.firstOrNull()?.id?.startsWith("__placeholder_") == true) {
@@ -914,6 +934,8 @@ class SearchViewModel @Inject constructor(
                 }
             } else {
                 orderedRows
+            }).let { rows ->
+                if (maxAge != null) rows.map { it.filterKidsItems(maxAge) } else rows
             }
             state.copy(
                 catalogRows = filteredRows
