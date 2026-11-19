@@ -44,15 +44,19 @@ import com.nuvio.tv.ui.netflyhdr.detail.NetflyHdrDetailScreen
 import com.nuvio.tv.ui.screens.home.HomeScreen
 import com.nuvio.tv.ui.screens.addon.AddonManagerScreen
 import com.nuvio.tv.ui.screens.addon.CatalogOrderScreen
-import com.nuvio.tv.ui.screens.library.LibraryScreen
 import com.nuvio.tv.ui.screens.player.PlayerExitReason
 import com.nuvio.tv.ui.screens.player.PlayerScreen
 import com.nuvio.tv.ui.screens.player.PostPlayRecommendation
 import com.nuvio.tv.ui.screens.player.playerBackOpensCurrentEpisodeStreams
 import com.nuvio.tv.ui.screens.party.PartyScreen
 import com.nuvio.tv.ui.screens.plugin.PluginScreen
-import com.nuvio.tv.ui.screens.search.DiscoverScreen
-import com.nuvio.tv.ui.screens.search.SearchScreen
+import com.nuvio.tv.ui.netflyhdr.NetflyHdrRoutes
+import com.nuvio.tv.ui.netflyhdr.browse.NetflyHdrCalendarScreen
+import com.nuvio.tv.ui.netflyhdr.browse.NetflyHdrDiscoverScreen
+import com.nuvio.tv.ui.netflyhdr.browse.NetflyHdrHistoryScreen
+import com.nuvio.tv.ui.netflyhdr.browse.NetflyHdrLibraryScreen
+import com.nuvio.tv.ui.netflyhdr.browse.NetflyHdrSearchScreen
+import com.nuvio.tv.ui.netflyhdr.hub.NetflyHdrHubScreen
 import com.nuvio.tv.ui.screens.settings.AboutScreen
 import com.nuvio.tv.ui.screens.settings.LayoutSettingsScreen
 import com.nuvio.tv.ui.screens.settings.LicensesAttributionsScreen
@@ -1318,10 +1322,12 @@ private fun PlaybackNavHost(
             )
         }
 
+        // Netfly HDR: the base search screen is replaced by the Netfly
+        // presentation (keyboard left + results right) on the same route.
         rootComposable(Screen.Search.route) { backStackEntry ->
             val searchViewModel: com.nuvio.tv.ui.screens.search.SearchViewModel =
                 androidx.hilt.navigation.compose.hiltViewModel(backStackEntry)
-            SearchScreen(
+            NetflyHdrSearchScreen(
                 viewModel = searchViewModel,
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
                     val heroBackdrop = HeroBackdropState.consumeAndClear()
@@ -1334,18 +1340,13 @@ private fun PlaybackNavHost(
                         )
                     )
                 },
-                onNavigateToSeeAll = { catalogId, addonId, type ->
-                    navController.navigate(
-                        Screen.CatalogSeeAll.createRoute(catalogId, addonId, type, fromSearch = true)
-                    )
-                },
                 onOpenDiscover = { navController.navigate(Screen.Discover.route) }
             )
         }
 
+        // Netfly HDR: genre-chips Discover on the same route.
         rootComposable(Screen.Discover.route, withInset = discoverIsRoot) {
-            DiscoverScreen(
-                showBuiltInHeader = !hideBuiltInHeaders,
+            NetflyHdrDiscoverScreen(
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
                     val heroBackdrop = HeroBackdropState.consumeAndClear()
                     navController.navigate(
@@ -1360,37 +1361,34 @@ private fun PlaybackNavHost(
             )
         }
 
+        // Netfly HDR: My List presentation on the same route.
         rootComposable(Screen.Library.route) {
-            LibraryScreen(
-                showBuiltInHeader = !hideBuiltInHeaders,
+            NetflyHdrLibraryScreen(
                 onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
                     navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
-                },
-                onNavigateToCatalogSeeAll = { catalogId, addonId, type ->
-                    navController.navigate(Screen.CatalogSeeAll.createRoute(catalogId, addonId, type))
-                },
-                onCloudPlaybackResolved = { info ->
-                    val filename = info.filename ?: info.file.name
-                    navController.navigate(
-                        Screen.Player.createRoute(
-                            streamUrl = info.url,
-                            title = filename,
-                            streamName = filename,
-                            contentType = "cloud",
-                            contentName = info.item.name,
-                            videoId = "${info.item.stableKey}:${info.file.stableKey}",
-                            season = 1,
-                            episode = info.sequenceIndex + 1,
-                            episodeTitle = filename,
-                            filename = filename,
-                            videoSize = info.videoSizeBytes,
-                            addonName = info.item.providerName,
-                            streamDescription = info.item.name,
-                            cloudSessionToken = info.sessionToken
-                        )
-                    )
                 }
             )
+        }
+
+        // Netfly HDR browse + hub destinations (§9/§10).
+        rootComposable(NetflyHdrRoutes.CALENDAR) {
+            NetflyHdrCalendarScreen(
+                onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
+                    navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                }
+            )
+        }
+
+        rootComposable(NetflyHdrRoutes.HISTORY) {
+            NetflyHdrHistoryScreen(
+                onNavigateToDetail = { itemId, itemType, addonBaseUrl ->
+                    navController.navigate(Screen.Detail.createRoute(itemId, itemType, addonBaseUrl))
+                }
+            )
+        }
+
+        rootComposable(NetflyHdrRoutes.STORE) {
+            NetflyHdrHubScreen()
         }
 
         rootComposable(Screen.Settings.route) {
