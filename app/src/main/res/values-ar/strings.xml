@@ -808,6 +808,7 @@
     <string name="sub_outline">الإطار الخارجي</string>
     <string name="sub_outline_sub">إضافة إطار حول نص الترجمة لتحسين رؤيته</string>
     <string name="sub_outline_color">لون الإطار</string>
+    <string name="sub_outline_width">عرض الإطار</string>
     <string name="sub_hdr_style">نمط منفصل لـ HDR / Dolby Vision</string>
     <string name="sub_hdr_style_sub">استخدام لون نص مختلف وسطوع أخفت للترجمة على فيديو HDR وDolby Vision</string>
     <string name="sub_hdr_text_color">لون نص HDR</string>
@@ -1573,6 +1574,13 @@
     <string name="addon_installing">جارٍ التثبيت</string>
     <string name="addon_install_btn">تثبيت</string>
     <string name="addon_install_success">تم تثبيت %1$s</string>
+    <string name="addon_tracking_consent_title">إضافة تتبع</string>
+    <string name="addon_tracking_consent_body">%1$s إضافة تتبع. سيرسل Nuvio إليها نشاطك: ما تشغّله وتوقفه مؤقتًا وتوقفه مع موضع التشغيل، وما تضيفه إلى مكتبتك أو تزيله منها، وما تعلّمه كمشاهَد أو غير مشاهَد. تغادر هذه البيانات Nuvio ويتولاها مطوّر الإضافة والخدمة التي تتصل بها.</string>
+    <string name="addon_tracking_consent_checkbox">أوافق على مشاركة نشاط مشاهدتي ومكتبتي مع هذه الإضافة</string>
+    <string name="addon_tracking_consent_checked">محدَّد</string>
+    <string name="addon_tracking_consent_unchecked">غير محدَّد</string>
+    <string name="addon_tracking_consent_cancel">إلغاء</string>
+    <string name="addon_tracking_consent_install">تثبيت</string>
     <string name="addon_error_invalid_url">أدخل رابط إضافة صالح</string>
     <string name="addon_error_invalid_scheme">يجب أن يبدأ رابط الإضافة بـ http أو https</string>
     <string name="addon_installed_section">مثبتة</string>
@@ -1993,6 +2001,10 @@
     <string name="library_watchlist">قائمة المشاهدة</string>
     <string name="library_syncing_library">جارٍ مزامنة المكتبة…</string>
     <string name="library_type_all">الكل</string>
+    <string name="library_empty_title">لا توجد عناصر للعرض</string>
+    <string name="library_empty_local_hint">غيّر عوامل التصفية أو ابدأ بحفظ مفضّلاتك لرؤيتها هنا</string>
+    <string name="library_empty_trakt_hint">غيّر عوامل التصفية أو استخدم + في التفاصيل لإضافة عناصر إلى قائمة المشاهدة أو القوائم</string>
+    <string name="library_empty_simkl_hint">غيّر عوامل التصفية أو استخدم + في التفاصيل لإضافة عناصر إلى حالة Simkl</string>
     <string name="library_empty_trakt_not_auth_title">حساب Trakt غير متصل</string>
     <string name="library_empty_trakt_not_auth_subtitle">اربط حساب Trakt الخاص بك في الإعدادات لعرض مكتبة Trakt</string>
     <string name="library_list_create_dialog_title">إنشاء قائمة</string>
