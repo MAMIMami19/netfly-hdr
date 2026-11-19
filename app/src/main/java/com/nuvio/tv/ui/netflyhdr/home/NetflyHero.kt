@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
@@ -112,6 +113,13 @@ fun NetflyHero(
     index: Int = 0,
     count: Int = 1,
     autoplayTrailer: Boolean = true,
+    /**
+     * Extra bottom inset for the FULLSCREEN mode's text block and mute
+     * toggle. The home rows list overlays the bottom of the screen, so the
+     * host passes the rows height here to lift the content above it.
+     * Ignored by PANEL and BARE, which center their text.
+     */
+    bottomContentPadding: Dp = 0.dp,
     modifier: Modifier = Modifier
 ) {
     val reduceMotion = LocalNetflyHomePrefs.current.reduceMotion
@@ -283,12 +291,12 @@ fun NetflyHero(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .width(640.dp)
-                        .padding(start = 80.dp, bottom = 32.dp, end = 16.dp)
+                        .padding(start = 80.dp, bottom = 32.dp + bottomContentPadding, end = 16.dp)
                 )
                 muteToggle(
                     Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(end = 24.dp, bottom = 24.dp)
+                        .padding(end = 24.dp, bottom = 24.dp + bottomContentPadding)
                 )
             }
         }
@@ -465,6 +473,7 @@ fun NetflyHeroCarouselHost(
     initialIndex: Int = 0,
     onItemClick: (NetflyHeroItem) -> Unit = {},
     onItemFocus: (NetflyHeroItem) -> Unit = {},
+    bottomContentPadding: Dp = 0.dp,
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) return
@@ -519,6 +528,7 @@ fun NetflyHeroCarouselHost(
             mode = mode,
             index = index,
             count = items.size,
+            bottomContentPadding = bottomContentPadding,
             modifier = Modifier.fillMaxWidth()
         )
     }

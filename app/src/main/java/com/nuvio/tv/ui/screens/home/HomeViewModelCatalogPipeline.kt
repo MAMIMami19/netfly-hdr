@@ -33,6 +33,7 @@ import com.nuvio.tv.domain.model.PLACEHOLDER_IMAGE_URL
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withPermit
 import com.nuvio.tv.core.util.filterReleasedItems
+import com.nuvio.tv.ui.netflyhdr.profiles.filterKidsItems
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
@@ -579,6 +580,8 @@ internal suspend fun HomeViewModel.updateCatalogRowsPipeline() {
     val currentGridItems = _uiState.value.gridItems
     val heroSectionEnabled = _uiState.value.heroSectionEnabled
     val hideUnreleased = _uiState.value.hideUnreleasedContent
+    // Netfly HDR: kids age-rating cap for the active profile (null = off).
+    val kidsMaxAge = currentKidsSettings.takeIf { it.enabled }?.maxAgeYears
     val titlesSnapshot = customCatalogTitles
 
     val (displayRows, baseHeroItems, baseGridItems, fullRowsFiltered) = withContext(Dispatchers.Default) {
@@ -587,11 +590,11 @@ internal suspend fun HomeViewModel.updateCatalogRowsPipeline() {
             val custom = titlesSnapshot[key]
             if (!custom.isNullOrBlank()) row.copy(catalogName = custom) else row
         }
-        val orderedRows = if (hideUnreleased) {
-            val today = LocalDate.now()
-            rawRows.map { it.filterReleasedItems(today) }
-        } else {
-            rawRows
+        val today = LocalDate.now()
+        val orderedRows = rawRows.map { row ->
+            var filtered = if (hideUnreleased) row.filterReleasedItems(today) else row
+            if (kidsMaxAge != null) filtered = filtered.filterKidsItems(kidsMaxAge)
+            filtered
         }
         val selectedHeroCatalogSet = heroCatalogKeys.toSet()
         val orderedKeySet = orderedKeys.toSet()
@@ -606,11 +609,10 @@ internal suspend fun HomeViewModel.updateCatalogRowsPipeline() {
             val heroOnlyRows = selectedHeroCatalogSet
                 .filter { it !in orderedKeySet }
                 .mapNotNull { catalogSnapshot[it] }
-            val heroOnlyFiltered = if (hideUnreleased) {
-                val today = LocalDate.now()
-                heroOnlyRows.map { it.filterReleasedItems(today) }
-            } else {
-                heroOnlyRows
+            val heroOnlyFiltered = heroOnlyRows.map { row ->
+                var filtered = if (hideUnreleased) row.filterReleasedItems(today) else row
+                if (kidsMaxAge != null) filtered = filtered.filterKidsItems(kidsMaxAge)
+                filtered
             }
             fromOrdered + heroOnlyFiltered
         } else {
@@ -660,11 +662,10 @@ internal suspend fun HomeViewModel.updateCatalogRowsPipeline() {
             val nonOrderedRows = catalogSnapshot.keys
                 .filter { it !in orderedKeySet }
                 .mapNotNull { catalogSnapshot[it] }
-            if (hideUnreleased) {
-                val today = LocalDate.now()
-                nonOrderedRows.map { it.filterReleasedItems(today) }
-            } else {
-                nonOrderedRows
+            nonOrderedRows.map { row ->
+                var filtered = if (hideUnreleased) row.filterReleasedItems(today) else row
+                if (kidsMaxAge != null) filtered = filtered.filterKidsItems(kidsMaxAge)
+                filtered
             }
         }
         val fallbackHeroItemsWithArtwork = slotShuffled(
