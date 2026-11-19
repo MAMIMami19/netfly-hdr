@@ -1,0 +1,79 @@
+name: Build Netfly HDR
+
+# Netfly HDR 1.0.0 (vc 1, com.netfly.hdr): a cinematic Android TV streaming
+# app built on NuvioTV 1.2.0-beta.2, with Netfly's red themes, home layouts,
+# NavRail, provider hub, profiles and ambient mode.
+# CI pattern mirrors the Notflix restyle builds: JDK 17, SDK 36, keystore +
+# backend config from GitHub Secrets, signed Full release APKs to a DRAFT
+# release (artifact storage quota is hit). Delete the draft after the APKs
+# are verified/downloaded.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# Serialize runs: two concurrent full-release builds died together when the
+# runner pool cancelled them; queue instead.
+concurrency:
+  group: netfly-hdr-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Write local.properties (backend config + release signing)
+        run: |
+          echo "${{ secrets.NUVIO_KEYSTORE_B64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "NUVIO_SUPABASE_URL=${{ secrets.NUVIO_SUPABASE_URL }}"
+            echo "NUVIO_SUPABASE_ANON_KEY=${{ secrets.NUVIO_SUPABASE_ANON_KEY }}"
+            echo "NUVIO_SUPABASE_FALLBACK_URL=${{ secrets.NUVIO_SUPABASE_FALLBACK_URL }}"
+            echo "NUVIO_RELEASE_STORE_FILE=$RUNNER_TEMP/release.keystore"
+            echo "NUVIO_RELEASE_STORE_PASSWORD=${{ secrets.NUVIO_RELEASE_STORE_PASSWORD }}"
+            echo "NUVIO_RELEASE_KEY_ALIAS=${{ secrets.NUVIO_RELEASE_KEY_ALIAS }}"
+            echo "NUVIO_RELEASE_KEY_PASSWORD=${{ secrets.NUVIO_RELEASE_KEY_PASSWORD }}"
+          } > local.properties
+
+      - name: Install Android SDK 36
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Build signed Full release APKs
+        run: |
+          chmod +x gradlew
+          # lintVitalAnalyzeFullRelease is skipped: on the 7 GB GitHub
+          # runner it forks a second JVM while the Gradle daemon holds its
+          # heap. --max-workers=2 caps parallel Kotlin/native workers so
+          # peak memory stays well under the runner's limit (gradle.properties
+          # pins the heap to 4g).
+          ./gradlew :app:assembleFullRelease -x lintVitalAnalyzeFullRelease --max-workers=2 --stacktrace --console=plain
+
+      - name: Upload release APKs to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Artifact storage quota is hit (500 MB; usage recalculates only
+          # every 6-12 h), so the APKs go to a DRAFT release instead — drafts
+          # are invisible to the in-app updater (unauthenticated API calls
+          # never see them, and the tag is not a valid version anyway).
+          # Delete the draft after the APKs are verified/downloaded.
+          TAG="netfly-hdr-draft-${{ github.run_number }}"
+          gh release create "$TAG" \
+            --draft \
+            --title "Netfly HDR draft (CI run ${{ github.run_number }})" \
+            --notes "CI-built Netfly HDR release APKs (1.0.0, vc 1, com.netfly.hdr). Draft only — do not publish without review." \
+            app/build/outputs/apk/full/release/*.apk
